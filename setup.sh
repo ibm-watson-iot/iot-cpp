@@ -29,11 +29,10 @@ cd jsoncpp-0.10.6
 python amalgamate.py
 cp dist/jsoncpp.cpp ../../lib/
 cp -R dist/json ../../lib/
-cd ..
+cd ../../
 cp ./lib_bk/CMakeLists.txt ./lib/
 echo "removing the temporary files"
 rm -rf ./tmp/
 rm -rf ./lib_bk/
-rm -rf ./build/
 echo "finished setup"
 
