@@ -498,7 +498,6 @@ namespace Watson_IOTP {
 
 	/////////////////////////////////////////////////////
 	bool IOTP_Client::supportDeviceActions() const {
-		std::cout<<"mActionhadler:"<<mActionHandler<<std::endl;
 		return (!(mActionHandler == nullptr));
 	}
 
@@ -510,8 +509,6 @@ namespace Watson_IOTP {
 		if (this->subscribeCommandHandler(SERVER_RESPONSE_TOPIC, mResponseHandler)) {
 			Json::Value jsonManageData;
 
-			std::cout<<"Actions: "<<supportDeviceActions()<<std::endl;
-			std::cout<<"Firmware Actions: "<<supportFirmwareActions()<<std::endl;
 			jsonManageData["lifetime"] = mLifetime;
 			jsonManageData["supports"]["deviceActions"] = supportDeviceActions();
 			jsonManageData["supports"]["firmwareActions"] = supportFirmwareActions();

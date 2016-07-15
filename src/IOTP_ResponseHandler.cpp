@@ -12,6 +12,7 @@
  *
  * Contributors:
  *    Mike Tran - initial API and implementation and/or initial documentation
+ *    Hari Prasada Reddy - Added functionalities/documentation to standardize with other client libraries
  *******************************************************************************/
 
 #include <iostream>

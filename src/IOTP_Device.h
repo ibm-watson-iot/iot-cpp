@@ -12,6 +12,7 @@
  *
  * Contributors:
  *    Mike Tran - initial API and implementation and/or initial documentation
+ *    Hari Prasada reddy - Impelemented changes to add Client library functionality
  *******************************************************************************/
 
 #ifndef DEVICEDATA_H_
@@ -104,47 +105,6 @@ namespace Watson_IOTP {
 
 	typedef IOTP_DeviceLocation::ptr_t iotf_device_location_ptr;
 
-
-
-	/*class IOTP_Device {
-	public:
-
-		/** Pointer type for this object */
-	/*	typedef std::shared_ptr<IOTP_Device> ptr_t;
-
-		IOTP_Device(IOTP_Client& client, const char* typeId, const char* deviceId, IOTP_DeviceInfo* deviceInfo);
-		IOTP_Device(IOTP_Client& client, std::string& typeId, std::string& deviceId, IOTP_DeviceInfo* deviceInfo);
-		IOTP_Device(IOTP_Client& client, std::string& typeId, std::string& deviceId, IOTP_DeviceInfo* deviceInfo,
-				iotp_device_action_handler_ptr actionHandler, iotp_device_firmware_handler_ptr firmwareHandler);
-		void setLifetime(int lifetime) {mLifetime = lifetime;}
-
-		std::string getTypeId() const { return mTypeId; }
-		std::string getDeviceId() const { return mDeviceId; }
-		IOTP_DeviceInfo* getDeviceInfo() const { return mDeviceInfo; };
-		int getLifetime() const { return mLifetime; }
-		bool supportDeviceActions() const;
-		bool supportFirmwareActions() const;
-
-		bool manage();
-		bool unmanage();
-		bool update_device_location(IOTP_DeviceLocation& deviceLocation);
-
-	private:
-		std::string send_message(const std::string& topic, const Json::Value& data, int qos = 1);
-
-		IOTP_Client& mClient;
-		std::string mTypeId;
-		std::string mDeviceId;
-		int mLifetime;
-		IOTP_DeviceInfo* mDeviceInfo;
-		iotp_response_handler_ptr mResponseHandler;
-		iotp_device_action_handler_ptr mActionHandler;
-		iotp_device_firmware_handler_ptr mFirmwareHandler;
-		int mReqCounter;
-	};
-
-	typedef IOTP_Device::ptr_t iotp_device_ptr;
-*/
 }
 
 #endif /* DEVICEDATA_H_ */

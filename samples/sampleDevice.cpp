@@ -284,10 +284,6 @@ int main(int argc, char **argv) {
 		std::string deviceId = prop.getdeviceId().c_str();
 
 
-		//IOTP_Device device(client, deviceType, deviceId, &deviceInfo, ptr, fwPtr);
-		//iotp_device_action_handler_ptr = newactionHandler;
-		//iotp_device_firmware_handler_ptr firmwareHandler;
-		std::cout<<"actionHandler :"<<ptr<<std::endl;
 		IOTP_Client managedClient(prop, &deviceInfo, ptr, fwPtr);
 
 		success = managedClient.connect();
