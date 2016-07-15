@@ -1,4 +1,4 @@
-Update in progress
+Device Management update in progress
 
 C++ Client Library - Introduction
 ============================================
