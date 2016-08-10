@@ -443,7 +443,7 @@ int main(int argc, char **argv) {
  	return 0;
 }
 
-void fillDeviceData(const std::string& filePath, iotf_device_data_ptr& deviceDataPtr) {
+int fillDeviceData(const std::string& filePath, iotf_device_data_ptr& deviceDataPtr) {
 	Json::Reader reader;
 	Json::Value root;
 	std::filebuf fb;
