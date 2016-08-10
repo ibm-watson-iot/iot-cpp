@@ -43,7 +43,7 @@ mDevAttributeHandler(devAttributeHandler){
 bool IOTP_DeviceClient::connect()
 	throw(mqtt::exception, mqtt::security_exception) {
 	bool ret = IOTP_Client::connect();
-	if(mProperties.getOrgId().compare("quickstart") != 0)
+	if(mProperties.getorgId().compare("quickstart") != 0)
 		subscribeCommands();
 
 	return ret;

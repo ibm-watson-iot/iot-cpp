@@ -34,7 +34,7 @@
 
 using namespace Watson_IOTP;
 
-void fillDeviceData(const std::string& filePath, iotf_device_data_ptr& deviceDataPtr);
+int fillDeviceData(const std::string& filePath, iotf_device_data_ptr& deviceDataPtr);
 int InitializeProperties(const std::string& filePath, Properties& prop);
 
 const std::string TEST_PAYLOADS("{"
@@ -415,7 +415,7 @@ int main(int argc, char **argv) {
 			std::cout<<"Waiting for things to do...Press [Enter] to unregister and disconnect . . .";
 			std::cin.get();
 
-			if (static_cast<SampleDeviceAction*>(ptr.get())->getReboot() == false) {
+			if (static_cast<SampleDeviceAction*>(actionPtr.get())->getReboot() == false) {
 
 				std::cout<<"Coming to Unmanage"<<std::endl;
 				// If reboot was called, do not call unmange (is it a bug in WIoTP?)
@@ -474,6 +474,8 @@ void fillDeviceData(const std::string& filePath, iotf_device_data_ptr& deviceDat
 	deviceDataPtr =
 			std::make_shared < IOTP_DeviceData
 					> (deviceInfoPtr, deviceLocationPtr, deviceFirmwarePtr, deviceMetaDataPtr);
+
+	return 1;
 }
 int InitializeProperties(const std::string& filePath,Properties& prop) {
 	Json::Reader reader;

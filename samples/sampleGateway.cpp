@@ -277,7 +277,7 @@ int main(int argc, char **argv) {
 
 		MyCommandCallback myCallback;
 		client.setCommandHandler(&myCallback);
-		client.subscribeGatewayCommands();
+
 		client.subscribeDeviceCommands("raspi", "pi1");
 		//client.subscribeDeviceCommands();
 		Json::Value jsonPayload;

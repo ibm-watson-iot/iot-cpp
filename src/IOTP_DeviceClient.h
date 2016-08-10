@@ -37,6 +37,16 @@ public:
 	~IOTP_DeviceClient(){}
 
 	/**
+	 * Connect to Watson IoT Platform messaging server using default options.
+	 *
+	 * @return bool
+	 * returns true if connection succeeds else fasle
+	 * @throw MQTT exceptions
+	 */
+	bool connect()
+		throw(mqtt::exception, mqtt::security_exception) ;
+
+	/**
 	* Function used to Publish events from the device to the IBM Watson IoT service
 	* @param eventType - Type of event to be published e.g status, gps
 	* @param eventFormat - Format of the event e.g json
