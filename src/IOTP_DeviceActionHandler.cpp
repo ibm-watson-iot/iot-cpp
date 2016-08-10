@@ -12,7 +12,6 @@
  *
  * Contributors:
  *    Mike Tran - initial API and implementation and/or initial documentation
- *    Hari Prasada reddy - Impelemented changes to add Client library functionality
  *******************************************************************************/
 
 #include <iostream>
@@ -41,6 +40,9 @@ namespace Watson_IOTP {
 			rsp = factory_reset();
 		}
 
+		std::cout<<"Rc:"<<rsp->get_rc()<<std::endl;
+		std::cout<<"Msg:"<<rsp->get_message()<<std::endl;
+		std::cout<<"ReqId"<<jsonPayload.get("reqId", "").asString()<<std::endl;
 		Json::Value payload;
 		payload["rc"] = rsp->get_rc();
 		if (rsp->get_message().empty() == false) {
@@ -51,6 +53,9 @@ namespace Watson_IOTP {
 		IOTP_ReplyMessage reply(DEVICE_REPONSE_TOPIC, payload);
 		iotp_reply_message_ptr replyPtr = std::make_shared<IOTP_ReplyMessage>(reply);
 
+//		std::cout<<"reply message:"<<payload["message"]<<std::endl;
+//		std::cout<<"reply reqId:"<<payload["reqId"]<<std::endl;
+//		std::cout<<"reply rc:"<<payload["rc"]<<std::endl;
 		if (mClient != nullptr) {
 			mClient->IOTF_send_reply(replyPtr);
 			return nullptr;
@@ -62,6 +67,8 @@ namespace Watson_IOTP {
 		Json::Value jsonPayload;
 		Json::Reader reader;
 		iotp_reply_message_ptr replyPtr;
+
+		std::cout<<"Message Arrived: msgPtr"<<std::endl;
 
 		if (reader.parse(msg->get_payload(), jsonPayload)) {
 			replyPtr = message_arrived(topic, jsonPayload);

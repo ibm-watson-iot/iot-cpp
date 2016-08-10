@@ -47,11 +47,6 @@
 
 namespace Watson_IOTP {
 
-//	const std::string& SERVER_RESPONSE_TOPIC{
-//		static std::string* str = new std::string ("iotdm-1/response");
-//		return *str;
-//	}
-
 	const unsigned long DEFAULT_TIMEOUT() {
 		static unsigned long default_timeout = 10000;
 		return default_timeout;
@@ -110,16 +105,22 @@ namespace Watson_IOTP {
 		}
 
 		if (handler == nullptr && user_callback) {
-			std::cout << "calling user_callback\n";
-			std::string::size_type pos = topic.find("cmd/");	//"iot-2/cmd/+/fmt/+"
-			std::string::size_type nxtpos = topic.find_first_of('/', pos+4);
+			std::cout << "calling user_callback..."<<"Topic: "<<topic<<"\n";
+			std::string::size_type pos = topic.find("type/");	//iot-2/type/devicetest/id/haridevice/cmd/temparature/fmt/json
+			std::string::size_type nxtpos = topic.find_first_of('/', pos+5);
+			std::string deviceType = topic.substr(pos+5,nxtpos-(pos+5));
+			pos = topic.find("id/");	//"iot-2/cmd/+/fmt/+"
+			nxtpos = topic.find_first_of('/', pos+3);
+			std::string deviceId = topic.substr(pos+3,nxtpos-(pos+3));
+			pos = topic.find("cmd/");	//"iot-2/cmd/+/fmt/+"
+			nxtpos = topic.find_first_of('/', pos+4);
 			std::string command = topic.substr(pos+4,nxtpos-(pos+4));
 			pos = topic.find("fmt/",nxtpos+1);
 			nxtpos = topic.find_first_of('/', pos+4);
 			std::string format = topic.substr(pos+4,nxtpos);
 			std::string payload = msg->get_payload();
 
-			Command cmd(command, format, payload);
+			Command cmd(deviceType, deviceId, command, format, payload);
 
 			user_callback->processCommand(cmd);
 		}
@@ -171,6 +172,10 @@ namespace Watson_IOTP {
 
 	bool IOTP_Client::IOTF_Callback::check_subscription(std::string topic, iotp_message_handler_ptr handler) {
 		bool found = false;
+//		// show content:
+//		  for (std::multimap<std::string, iotp_message_handler_ptr>::iterator myit=mHandlers.begin(); myit!=mHandlers.end(); ++myit)
+//		    std::cout << (*myit).first << " => " << (*myit).second << '\n';
+
 		for (std::multimap<std::string, iotp_message_handler_ptr>::iterator it=mHandlers.begin(); it!=mHandlers.end(); ++it) {
 			if ((*it).first == topic && (*it).second == handler) {
 				found = true;
@@ -206,17 +211,9 @@ namespace Watson_IOTP {
 
 	//IOTP_Client Initializing parameters
 	void IOTP_Client::InitializeProperties(Properties& prop) {
-		std::string serverURI = "tcp://" + prop.getorgId() + ".messaging."+prop.getdomain()+":1883";
-		std::string clientId = "d:" + prop.getorgId() + ":" + prop.getdeviceType() + ":" + prop.getdeviceId();
-		pasync_client = new mqtt::async_client(serverURI, clientId);
+		mProperties = prop;
 		mExit = false;
 		mReqCounter = 0;
-		connectOptions.set_clean_session(true);
-		std::string usrName = prop.getauthMethod();
-		connectOptions.set_user_name(usrName);
-
-		std::string passwd = prop.getauthToken();
-		connectOptions.set_password(passwd);
 		mActionHandler = nullptr;
 		mFirmwareHandler = nullptr;
 		mResponseHandler = std::make_shared<IOTP_ResponseHandler> ();
@@ -229,18 +226,12 @@ namespace Watson_IOTP {
 	}
 
 	// IOTF_Client constructors and methods
-	IOTP_Client::IOTP_Client(Properties& prop, Watson_IOTP::IOTP_DeviceInfo* deviceInfo,
-		iotp_device_action_handler_ptr& actionHandler, iotp_device_firmware_handler_ptr& firmwareHandler) {
+	//IOTP_Client::IOTP_Client(Properties& prop, Watson_IOTP::IOTP_DeviceInfo* deviceInfo,
+	IOTP_Client::IOTP_Client(Properties& prop, iotp_device_action_handler_ptr& actionHandler,
+		iotp_device_firmware_handler_ptr& firmwareHandler) {
 		InitializeProperties(prop);
-		mDeviceInfo  = deviceInfo;
 		mActionHandler = actionHandler;
 		mFirmwareHandler = firmwareHandler;
-	}
-
-	// IOTF_Client constructors and methods
-	IOTP_Client::IOTP_Client(Properties& prop, Watson_IOTP::IOTP_DeviceInfo* deviceInfo) :
-		mDeviceInfo (deviceInfo) {
-		InitializeProperties(prop);
 	}
 
 	IOTP_Client::~IOTP_Client() {
@@ -258,7 +249,7 @@ namespace Watson_IOTP {
 	 *
 	 */
 	void IOTP_Client::setKeepAliveInterval(int keepAliveInterval) {
-		connectOptions.set_keep_alive_interval(keepAliveInterval);
+		mKeepAliveInterval = keepAliveInterval;
 	}
 
 	/**
@@ -271,24 +262,47 @@ namespace Watson_IOTP {
 	bool IOTP_Client::connect()
 		throw(mqtt::exception, mqtt::security_exception) {
 		IOTF_ActionCallback action;
+		mqtt::connect_options connectOptions;
+		connectOptions.set_clean_session(true);
+		connectOptions.set_keep_alive_interval(mKeepAliveInterval);
+		std::string usrName;
+		std::string passwd;
+		bool isQuickstart = true;
 
-		std::string usrName = connectOptions.get_user_name();
-		if(usrName.compare("token") != 0) {
-			std::cout<<"wrong auth-Method supplied.Platform supports auth-method:\"token\""<<std::endl;
-			return false;
+		if(mProperties.getorgId().compare("quickstart") != 0) {
+			isQuickstart = false;
+			usrName = mProperties.getauthMethod();
+			if(usrName.compare("token") != 0) {
+				std::cout<<"wrong auth-Method supplied.Platform supports auth-method:\"token\""<<std::endl;
+				return false;
+			}
+			else
+			{
+				usrName = "use-token-auth";
+			}
+
+			passwd = mProperties.getauthToken();
 		}
-		else
-		{
-			usrName = "use-token-auth";
+
+		if(isQuickstart == false) {
 			connectOptions.set_user_name(usrName);
+			connectOptions.set_password(passwd);
 		}
 
-		mqtt::itoken_ptr conntok = pasync_client->connect(connectOptions, NULL, action);
+		mqtt::itoken_ptr conntok;
+		if(isQuickstart == true) {
+			conntok = pasync_client->connect(connectOptions);
+			conntok->wait_for_completion(DEFAULT_TIMEOUT());
+		}
+
+		else {
+		conntok = pasync_client->connect(connectOptions, NULL, action);
 		conntok->wait_for_completion(DEFAULT_TIMEOUT());
+		action.success();
+		}
 		if (action.success()) {
 			callback_ptr = set_callback();
 		}
-
 		if (conntok ->is_complete() == false)
 			return false;
 
@@ -306,6 +320,23 @@ namespace Watson_IOTP {
 	bool IOTP_Client::connect(mqtt::iaction_listener& cb)
 					throw(mqtt::exception, mqtt::security_exception) {
 		IOTF_ActionCallback action;
+		mqtt::connect_options connectOptions;
+		std::string usrName = mProperties.getauthMethod();
+		if(usrName.compare("token") != 0) {
+			std::cout<<"wrong auth-Method supplied.Platform supports auth-method:\"token\""<<std::endl;
+			return false;
+		}
+		else
+		{
+			usrName = "use-token-auth";
+			connectOptions.set_user_name(usrName);
+		}
+
+		connectOptions.set_clean_session(true);
+		connectOptions.set_keep_alive_interval(mKeepAliveInterval);
+
+		std::string passwd = mProperties.getauthToken();
+		connectOptions.set_password(passwd);
 		mqtt::itoken_ptr conntok = pasync_client->connect(connectOptions, NULL, action);
 		conntok->wait_for_completion(DEFAULT_TIMEOUT());
 
@@ -340,73 +371,37 @@ namespace Watson_IOTP {
 	}
 
 	/**
-	* Function used to Publish events from the device to the IBM Watson IoT service
-	* @param eventType - Type of event to be published e.g status, gps
-	* @param eventFormat - Format of the event e.g json
-	* @param data - Payload of the event
-	* @param QoS - qos for the publish event. Supported values : 0, 1, 2
-	*
-	* @return void
-	*/
-	void IOTP_Client::publishEvent(char *eventType, char *eventFormat, const char* data, int qos) {
-		std::string publishTopic= "iot-2/evt/"+std::string(eventType)+"/fmt/"+std::string(eventFormat);
-		std::string payload = data;
-		mqtt::message_ptr pubmsg = std::make_shared < mqtt::message > (data);
-		pubmsg->set_qos(qos);
-		mqtt::idelivery_token_ptr delivery_tok = pasync_client->publish(publishTopic, pubmsg);
-		delivery_tok->wait_for_completion(DEFAULT_TIMEOUT());
-		mqtt::message_ptr msgPtr = delivery_tok->get_message();
-	}
-
-	/**
-	* Function used to Publish events from the device to the IBM Watson IoT service
-	* @param eventType - Type of event to be published e.g status, gps
-	* @param eventFormat - Format of the event e.g json
-	* @param data - Payload of the event
-	* @param QoS - qos for the publish event. Supported values : 0, 1, 2
-	* @param iaction_listener& cb - call back function for action listner
-	* @return void
-	*/
-	void IOTP_Client::publishEvent(char *eventType, char *eventFormat, const char* data, int qos,  mqtt::iaction_listener& cb) {
-			std::string publishTopic= "iot-2/evt/"+std::string(eventType)+"/fmt/"+std::string(eventFormat);
-			std::string payload = data;
-			mqtt::message_ptr pubmsg = std::make_shared < mqtt::message > (data);
-			pubmsg->set_qos(qos);
-			mqtt::idelivery_token_ptr delivery_tok = pasync_client->publish(publishTopic, pubmsg, NULL, cb);
-	}
-
-	/**
 	 * Function used to Publish messages on a specific topic to the IBM Watson IoT service
 	 * @param topic - topic on which message is sent
 	 * @param message - message to be posted
 	 * @return mqtt::idelivery_token_ptr
 	 */
-	mqtt::idelivery_token_ptr IOTP_Client::publish(std::string topic, mqtt::message_ptr message) {
+	mqtt::idelivery_token_ptr IOTP_Client::publishTopic(std::string topic, mqtt::message_ptr message) {
 		mqtt::idelivery_token_ptr delivery_tok = pasync_client->publish(topic, message);
 		return delivery_tok;
 	}
 
-	/**
-	 * Function used to subscribe commands from the IBM Watson IoT service
-	 * @return bool
-	 * returns true if commands are subscribed successfully else false
-	 */
-	bool IOTP_Client::subscribeCommands() {
-		std::string topic = "iot-2/cmd/+/fmt/+";
-		int qos = 1;
+	mqtt::idelivery_token_ptr IOTP_Client::publishTopic(std::string topic, mqtt::message_ptr message,
+											void* userContext, mqtt::iaction_listener& cb) {
+		mqtt::idelivery_token_ptr delivery_tok = pasync_client->publish(topic, message, userContext, cb);
+		return delivery_tok;
+	}
+
+	bool IOTP_Client::subscribeTopic(const std::string& topic, int qos) {
 		if (callback_ptr->check_subscription(topic) == false) {
 			mqtt::itoken_ptr tok = pasync_client->subscribe(topic, qos);
 			tok->wait_for_completion(DEFAULT_TIMEOUT());
 			if (tok->is_complete()) {
 				callback_ptr->add_subscription(topic);
 				return true;
+				}
+				} else {
+					return true;
 			}
-		} else {
-			return true;
-		}
 		//If we come here, something is wrong.
 		return false;
 	}
+
 
 	/**
 	 * Function used to subscribe handler for each topic from the IBM Watson IoT service
@@ -485,9 +480,10 @@ namespace Watson_IOTP {
 					mReplyMsgs.pop();
 					std::string topic(reply->getTopic());
 					std::string jsonMessage(jsonValueToString(reply->getPayload()));
-					//std::cout << "Sending TOPIC " << topic << " PAYLOAD " << jsonMessage << std::endl;
+					std::cout << "Sending TOPIC " << topic << " PAYLOAD " << jsonMessage << std::endl;
 					mqtt::idelivery_token_ptr pubtok = pasync_client->publish(topic, (void*)jsonMessage.data(), jsonMessage.size(), reply->getQos(), false);
 					pubtok->wait_for_completion(DEFAULT_TIMEOUT());
+					bool success = pubtok->is_complete();
 				} else {
 					std::cout << "_send_reply: notified but queue is empty. Something went wrong." << std::endl;
 				}
@@ -496,7 +492,6 @@ namespace Watson_IOTP {
 		}
 	}
 
-	/////////////////////////////////////////////////////
 	bool IOTP_Client::supportDeviceActions() const {
 		return (!(mActionHandler == nullptr));
 	}
@@ -505,49 +500,11 @@ namespace Watson_IOTP {
 		return (!(mFirmwareHandler == nullptr));
 	}
 
-	bool IOTP_Client::manage() {
+
+	//Utility function for pushing manage messages to the Watson IoT Platform
+	bool IOTP_Client::pushManageMessage(std::string topic, Json::Value data) {
 		if (this->subscribeCommandHandler(SERVER_RESPONSE_TOPIC, mResponseHandler)) {
-			Json::Value jsonManageData;
-
-			jsonManageData["lifetime"] = mLifetime;
-			jsonManageData["supports"]["deviceActions"] = supportDeviceActions();
-			jsonManageData["supports"]["firmwareActions"] = supportFirmwareActions();
-			jsonManageData["deviceInfo"] = mDeviceInfo->toJsonValue();
-
-			std::string reqId = send_message(DEVICE_MANAGE_TOPIC, jsonManageData);
-			if (!reqId.empty()) {
-				Json::Value res = mResponseHandler->wait_for_response(DEFAULT_TIMEOUT(), reqId);
-				int rc = res.get("rc", -1).asInt();
-				if (rc == 200) {
-					if (mFirmwareHandler != nullptr) {
-						this->subscribeCommandHandler(SERVER_UPDATE_TOPIC, mFirmwareHandler);
-						this->subscribeCommandHandler(SERVER_OBSERVE_TOPIC, mFirmwareHandler);
-						this->subscribeCommandHandler(SERVER_CANCEL_TOPIC, mFirmwareHandler);
-						this->subscribeCommandHandler(SERVER_FIRMWARE_DOWNLOAD_TOPIC, mFirmwareHandler);
-						this->subscribeCommandHandler(SERVER_FIRMWARE_UPDATE_TOPIC, mFirmwareHandler);
-					}
-					if (mActionHandler != nullptr) {
-						this->subscribeCommandHandler(SERVER_DEVICE_REBOOT_TOPIC, mActionHandler);
-						this->subscribeCommandHandler(SERVER_FACTORY_RESET_TOPIC, mActionHandler);
-					}
-				}
-
-				return (rc == 200);
-			}
-		}
-		return false;
-	}
-
-	bool IOTP_Client::unmanage() {
-		Json::Value nullData;
-		std::string reqId = send_message(DEVICE_UNMANAGE_TOPIC, nullData);
-		this->unsubscribeCommands(SERVER_RESPONSE_TOPIC);
-		return (!reqId.empty());
-	}
-
-	bool IOTP_Client::update_device_location(IOTP_DeviceLocation& deviceLocation) {
-		if (this->subscribeCommandHandler(SERVER_RESPONSE_TOPIC, mResponseHandler)) {
-			std::string reqId = send_message(DEVICE_UPDATE_LOCATION_TOPIC, deviceLocation.toJsonValue());
+			std::string reqId = send_message(topic, data);
 			if (!reqId.empty()) {
 				Json::Value res = mResponseHandler->wait_for_response(DEFAULT_TIMEOUT(), reqId);
 				int rc = res.get("rc", -1).asInt();
@@ -555,8 +512,8 @@ namespace Watson_IOTP {
 			}
 		}
 		return false;
-	}
 
+	}
 	std::string IOTP_Client::send_message(const std::string& topic, const Json::Value& data, int qos) {
 		bool success = false;
 		Json::Value jsonManagePayload;
@@ -580,7 +537,7 @@ namespace Watson_IOTP {
 
 		mqtt::message_ptr pubmsg = std::make_shared<mqtt::message>(jsonMessage);
 		pubmsg->set_qos(qos);
-		mqtt::idelivery_token_ptr pubtok = this->publish(topic, pubmsg);
+		mqtt::idelivery_token_ptr pubtok = this->publishTopic(topic, pubmsg);
 		pubtok->wait_for_completion(DEFAULT_TIMEOUT());
 		success = pubtok->is_complete();
 
@@ -590,7 +547,6 @@ namespace Watson_IOTP {
 		}
 		return reqId;
 	}
-	/////////////////////////////////////////////////////////////////////////
 
 }
 

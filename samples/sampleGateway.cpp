@@ -27,7 +27,7 @@
 #include "json/json.h"
 #include "IOTP_Device.h"
 #include "IOTP_Client.h"
-#include "IOTP_DeviceClient.h"
+#include "IOTP_GatewayClient.h"
 #include "IOTP_DeviceActionHandler.h"
 #include "IOTP_DeviceFirmwareHandler.h"
 #include "IOTP_DeviceAttributeHandler.h"
@@ -224,7 +224,8 @@ public:
 class MyCommandCallback: public CommandCallback{
 	void processCommand(Command& cmd){
 		std::cout<<"Received Command \n"
-			<<"Command Name:"<<cmd.getCommandName()<<"\t format:"<<cmd.getFormat()<<" \t payload:"<<cmd.getPayload()<<"\n";
+				<<"Device Type:"<<cmd.getDeviceType()<<"\t Device Id:"<<cmd.getDeviceId()<<"\t Command Name:"<<cmd.getCommandName()
+				<<"\t format:"<<cmd.getFormat()<<" \t payload:"<<cmd.getPayload()<<"\n";
 	}
 };
 
@@ -236,7 +237,6 @@ int main(int argc, char **argv) {
 	mqtt::itoken_ptr subtok;
 	SampleActionListener listener;
 	SampleDeliveryActionListener deliveryListener;
-	bool success = false;
 	//int ret = 0;
 
 	Properties prop;
@@ -248,34 +248,8 @@ int main(int argc, char **argv) {
 	std::time_t now_time = std::chrono::system_clock::to_time_t(now);
 	std::cout << "Current time: " << std::ctime(&now_time);
 
-	//Qick start mode
-	prop.setorgId("quickstart");
-	prop.setdeviceType("devicetest");
-	prop.setdeviceId("haritestdevice");
-
-	std::cout<<"Creating IoTP Client with properties for quickstart mode"<<std::endl;
-	IOTP_DeviceClient quickClient(prop);
-	std::cout << "Connecting quick start client to Watson IoT platform" << std::endl;
-	success = quickClient.connect();
-	std::flush(std::cout);
-	if (!success){
-		std::cout<<"Connection failed\n";
-		return 1;
-	}
-
-	std::cout<<"Connection successful"<<std::endl;
-
-	jsonMessage = "{\"Data\": {\"Temp\": \"34\" } }"; //fastWriter.write(jsonPayload);
-	std::cout << "Publishing event:" << std::endl << jsonMessage << std::endl
-			<< std::flush;
-	// First publish event without listner.
-	quickClient.publishEvent("status", "json", jsonMessage.c_str(), 1);
-	std::cout<<"Published success\n";
-	quickClient.disconnect();
-	std::cout<<"Disconnected qucik start client"<<std::endl;
-
 	if(argc > 1) {
-		std::cout<<"Initializing properties for registered client"<<std::endl;
+		std::cout<<"Initializing properties"<<std::endl;
 		if(!InitializeProperties(argv[1],prop))
 		{
 			std::cout<<"Failed initializing properties from configuration file"<<std::endl;
@@ -288,9 +262,10 @@ int main(int argc, char **argv) {
 	}
 
 	std::cout<<"Creating IoTP Client with properties"<<std::endl;
-	IOTP_DeviceClient client(prop);
+	IOTP_GatewayClient client(prop);
 	//iotp_device_client_ptr client (prop);
 
+	bool success = false;
 	try {
 		//Connecting to client
 		std::cout<<"Connecting client to Watson IoT platform"<<std::endl;
@@ -302,23 +277,40 @@ int main(int argc, char **argv) {
 
 		MyCommandCallback myCallback;
 		client.setCommandHandler(&myCallback);
-		client.subscribeCommands();
+		client.subscribeGatewayCommands();
+		client.subscribeDeviceCommands("raspi", "pi1");
+		//client.subscribeDeviceCommands();
 		Json::Value jsonPayload;
 		Json::Value jsonText;
 
 		jsonMessage = "{\"Data\": {\"Temp\": \"34\" } }";//fastWriter.write(jsonPayload);
-		std::cout << "Publishing event:" << std::endl << jsonMessage << std::endl << std::flush;
+		std::cout << "Publishing Gateway event:" << std::endl << jsonMessage << std::endl << std::flush;
 		// First publish event without listner.
-		client.publishEvent("status", "json", jsonMessage.c_str(), 1);
+		client.publishGatewayEvent("status", "json", jsonMessage.c_str(), 1);
 
 		//Publish event with listner
-		std::cout << "Publishing event with listner:" << std::endl << jsonMessage << std::endl << std::flush;
-		client.publishEvent("status1", "json", jsonMessage.c_str(), 1, listener);
-		//Disconnect device client
-		client.disconnect();
-		std::cout << "Disconnected registered client\n";
+		std::cout << "Publishing Gateway event with listner:" << std::endl << jsonMessage << std::endl << std::flush;
+		client.publishGatewayEvent("status1", "json", jsonMessage.c_str(), 1, listener);
 
-		const Json::Value devInfo = root["DeviceInfo"];
+		std::cout << "Publishing Device event:" << std::endl << jsonMessage << std::endl << std::flush;
+		// First publish event without listner.
+		client.publishDeviceEvent("raspi", "pi1", "status", "json", jsonMessage.c_str(), 1);
+
+		//Publish event with listner
+		std::cout << "Publishing Device event with listner:" << std::endl << jsonMessage << std::endl << std::flush;
+		client.publishDeviceEvent("raspi", "pi1", "status1", "json", jsonMessage.c_str(), 1, listener);
+
+
+		std::cout<<"Waiting for things to do...Press [Enter] to unregister and disconnect . . .";
+		std::cin.get();
+
+		//Disconnect device client
+		std::cout << "Disconnecting..." << std::flush;
+		client.disconnect();
+		std::cout << "OK" << std::endl;
+
+
+		/*const Json::Value devInfo = root["DeviceInfo"];
 		const Json::Value devLocation = root["DeviceLocation"];
 		const Json::Value devMetaData = root["MetaData"];
 
@@ -348,7 +340,6 @@ int main(int argc, char **argv) {
 		//IOTP_Device device(client, deviceType, deviceId, &deviceInfo, ptr, fwPtr);
 		//iotp_device_action_handler_ptr = newactionHandler;
 		//iotp_device_firmware_handler_ptr firmwareHandler;
-		std::cout<<"Creating Managed Client\n";
 		IOTP_DeviceClient managedClient(prop, deviceDataPtr, ptr, fwPtr, devAttributePtr);
 		//iotp_device_client_ptr  managedClient(prop, deviceDataPtr, ptr, fwPtr, devAttributePtr);
 
@@ -443,7 +434,7 @@ int main(int argc, char **argv) {
 		std::cout << "Disconnecting..." << std::flush;
 		managedClient.disconnect();
 		std::cout << "OK" << std::endl;
-
+*/
 	}
 	catch (const mqtt::exception& exc) {
 		std::cerr << "Error: " << exc.what() << std::endl;
