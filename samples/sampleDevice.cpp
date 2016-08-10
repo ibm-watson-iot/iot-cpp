@@ -245,6 +245,7 @@ int main(int argc, char **argv) {
 	//int ret = 0;
 
 	Properties prop;
+	Properties quickProp;
 	Json::Value root;
 	Json::Reader reader;
 
@@ -271,13 +272,13 @@ int main(int argc, char **argv) {
 	try {
 
 		//Qick start mode
-		prop.setorgId("quickstart");
-		prop.setdeviceType("devicetest");
-		prop.setdeviceId("haritestdevice");
+		quickProp.setorgId("quickstart");
+		quickProp.setdeviceType("devicetest");
+		quickProp.setdeviceId("haritestdevice");
 
 
 		std::cout<<"Creating IoTP Client with properties for quickstart mode"<<std::endl;
-		IOTP_DeviceClient quickClient(prop);
+		IOTP_DeviceClient quickClient(quickProp);
 		std::cout << "Connecting quick start client to Watson IoT platform" << std::endl;
 		success = quickClient.connect();
 		std::flush(std::cout);
