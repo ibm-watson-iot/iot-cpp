@@ -5,7 +5,7 @@ C++ Client Library - Devices
 Introduction
 -------------------------------------------------------------------------------
 
-This client library describes how to use devices with the C++ ibmiotf client library. For help with getting started with this module, see `C++ Client Library - Introduction <https://github.com/ibm-messaging/iot-cpp/blob/master/README.md>`__. 
+This client library describes how to use devices with the C++ ibmiotf client library. For help with getting started with this module, see `C++ Client Library - Introduction <https://github.com/ibm-watson-iot/iot-cpp/blob/master/README.md>`__. 
 
 Constructor
 -------------------------------------------------------------------------------
@@ -100,44 +100,30 @@ Using a configuration file
 
 Instead of including a Properties object directly, you can use a configuration file containing the name-value pairs for Properties. If you are using a configuration file containing a Properties object, use the following code format.
 
-.. code:: java
+.. code:: C++
 
 
-	package com.ibm.iotf.sample.client.device;
+	//Registered device flow properties reading from configuration file in json format
+	std::cout<<"Creating IoTP Client with properties"<<std::endl;
+	IOTP_DeviceClient client(prop);
+	client.setKeepAliveInterval(90);
+	std::cout<<"Connecting client to Watson IoT platform"<<std::endl;
+	success = client.connect();
+	std::cout<<"Connected client to Watson IoT platform"<<std::endl;
+	std::flush(std::cout);
+	if(!success)
+		return 1;
 
-	import java.io.File;
-	import java.util.Properties;
+	MyCommandCallback myCallback;
+	client.setCommandHandler(&myCallback);
+	Json::Value jsonPayload;
+	Json::Value jsonText;
 
-	import com.google.gson.JsonObject;
-	import com.ibm.iotf.client.device.DeviceClient;
-
-	public class RegisteredDeviceEventPublishPropertiesFile {
-
-		public static void main(String[] args) {
-			//Provide the device specific data, as well as Auth-key and token using Properties class	
-			Properties options = DeviceClient.parsePropertiesFile(new File("C:\\temp\\device.prop"));
-
-			DeviceClient myClient = null;
-			try {
-				//Instantiate the class by passing the properties file			
-				myClient = new DeviceClient(options);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			
-			//Connect to the IBM IoT Foundation	
-			myClient.connect();
-			
-			//Generate a JSON object of the event to be published
-			JsonObject event = new JsonObject();
-			event.addProperty("name", "foo");
-			event.addProperty("cpu",  90);
-			event.addProperty("mem",  70);
-			
-			//Registered flow allows 0, 1 and 2 QoS
-			myClient.publishEvent("status", event, 1);
-			System.out.println("SUCCESSFULLY POSTED......");
-			
+	jsonMessage = "{\"Data\": {\"Temp\": \"34\" } }";
+	std::cout << "Publishing event:" << std::endl << jsonMessage << std::endl << std::flush;
+	// First publish event without listner.
+	client.publishEvent("status", "json", jsonMessage.c_str(), 1);
+		
       ...
 
 The content of the configuration file must be in the following format:
@@ -201,24 +187,26 @@ Handling commands
 When the device client connects it automatically subscribes to any command for this device. To process specific commands you need to register a command callback method. 
 The messages are returned as an instance of the Command class which has the following properties:
 
-std::string deviceType;
-std::string deviceId;
-std::string commandName;
-std::string format;
-std::string payload;
+* std::string deviceType;
+* std::string deviceId;
+* std::string commandName;
+* std::string format;
+* std::string payload;
+
 
 .. code:: C++
 
-//Implement the CommandCallback class to provide the way in which you want the command to be handled
-class MyCommandCallback: public CommandCallback{
-	/**
-	 * This method is invoked by the library whenever there is command matching the subscription criteria
-	 */
-	void processCommand(Command& cmd){
-		std::cout<<"Received Command \n"
+
+	//Implement the CommandCallback class to provide the way in which you want the command to be handled
+	class MyCommandCallback: public CommandCallback{
+		/**
+	 	* This method is invoked by the library whenever there is command matching the subscription criteria
+	 	*/
+		void processCommand(Command& cmd){
+			std::cout<<"Received Command \n"
 			<<"Command Name:"<<cmd.getCommandName()<<"\t format:"<<cmd.getFormat()<<" \t payload:"<<cmd.getPayload()<<"\n";
-	}
-};
+		}
+	};
 
 	//Registered device flow properties reading from configuration file in json format
 	std::cout<<"Creating IoTP Client with properties"<<std::endl;
@@ -233,5 +221,6 @@ class MyCommandCallback: public CommandCallback{
 
 	MyCommandCallback myCallback;
 	client.setCommandHandler(&myCallback);
+	
 
-
+----
