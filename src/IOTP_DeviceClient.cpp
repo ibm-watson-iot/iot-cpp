@@ -12,14 +12,14 @@
 namespace Watson_IOTP {
 
 // IOTP_DeviceClient constructors and methods
-IOTP_DeviceClient::IOTP_DeviceClient(Properties& prop) :mDevAttributeHandler (nullptr),
+IOTP_DeviceClient::IOTP_DeviceClient(Properties& prop) :mDevAttributeHandler (nullptr), mLifetime(3600),
 		IOTP_Client(prop){
 	InitializeMqttClient();
 }
 
 // IOTP_DeviceClient constructors and methods
 IOTP_DeviceClient::IOTP_DeviceClient(Properties& prop, iotf_device_data_ptr& deviceData) :
-		mDevAttributeHandler (nullptr), mDeviceData(deviceData), IOTP_Client(prop)  {
+		mDevAttributeHandler (nullptr), mDeviceData(deviceData), mLifetime(3600), IOTP_Client(prop)  {
 	InitializeMqttClient();
 }
 
@@ -33,6 +33,21 @@ mDevAttributeHandler(devAttributeHandler){
 	InitializeMqttClient();
 }
 
+/**
+ * Connect to Watson IoT Platform messaging server using default options.
+ *
+ * @return bool
+ * returns true if connection succeeds else fasle
+ * @throw MQTT exceptions
+ */
+bool IOTP_DeviceClient::connect()
+	throw(mqtt::exception, mqtt::security_exception) {
+	bool ret = IOTP_Client::connect();
+	if(mProperties.getOrgId().compare("quickstart") != 0)
+		subscribeCommands();
+
+	return ret;
+}
 /**
 * Function used to Publish events from the device to the IBM Watson IoT service
 * @param eventType - Type of event to be published e.g status, gps

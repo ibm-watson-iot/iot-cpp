@@ -14,6 +14,21 @@ namespace Watson_IOTP {
 IOTP_GatewayClient::IOTP_GatewayClient(Properties& prop): IOTP_Client(prop) {
 	InitializeMqttClient();
 }
+
+/**
+ * Connect to Watson IoT Platform messaging server using default options.
+ *
+ * @return bool
+ * returns true if connection succeeds else fasle
+ * @throw MQTT exceptions
+ */
+bool IOTP_GatewayClient::connect()
+	throw(mqtt::exception, mqtt::security_exception) {
+	bool ret = IOTP_Client::connect();
+	subscribeGatewayCommands();
+	return ret;
+}
+
 /**
 * Function used to Publish events from the device to the IBM Watson IoT service
 * @param eventType - Type of event to be published e.g status, gps

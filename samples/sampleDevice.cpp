@@ -34,6 +34,7 @@
 
 using namespace Watson_IOTP;
 
+void fillDeviceData(const std::string& filePath, iotf_device_data_ptr& deviceDataPtr);
 int InitializeProperties(const std::string& filePath, Properties& prop);
 
 const std::string TEST_PAYLOADS("{"
@@ -221,7 +222,11 @@ public:
 	}
 };
 
+//Implement the CommandCallback class to provide the way in which you want the command to be handled
 class MyCommandCallback: public CommandCallback{
+	/**
+	 * This method is invoked by the library whenever there is command matching the subscription criteria
+	 */
 	void processCommand(Command& cmd){
 		std::cout<<"Received Command \n"
 			<<"Command Name:"<<cmd.getCommandName()<<"\t format:"<<cmd.getFormat()<<" \t payload:"<<cmd.getPayload()<<"\n";
@@ -248,31 +253,6 @@ int main(int argc, char **argv) {
 	std::time_t now_time = std::chrono::system_clock::to_time_t(now);
 	std::cout << "Current time: " << std::ctime(&now_time);
 
-	//Qick start mode
-	prop.setorgId("quickstart");
-	prop.setdeviceType("devicetest");
-	prop.setdeviceId("haritestdevice");
-
-	std::cout<<"Creating IoTP Client with properties for quickstart mode"<<std::endl;
-	IOTP_DeviceClient quickClient(prop);
-	std::cout << "Connecting quick start client to Watson IoT platform" << std::endl;
-	success = quickClient.connect();
-	std::flush(std::cout);
-	if (!success){
-		std::cout<<"Connection failed\n";
-		return 1;
-	}
-
-	std::cout<<"Connection successful"<<std::endl;
-
-	jsonMessage = "{\"Data\": {\"Temp\": \"34\" } }"; //fastWriter.write(jsonPayload);
-	std::cout << "Publishing event:" << std::endl << jsonMessage << std::endl
-			<< std::flush;
-	// First publish event without listner.
-	quickClient.publishEvent("status", "json", jsonMessage.c_str(), 1);
-	std::cout<<"Published success\n";
-	quickClient.disconnect();
-	std::cout<<"Disconnected qucik start client"<<std::endl;
 
 	if(argc > 1) {
 		std::cout<<"Initializing properties for registered client"<<std::endl;
@@ -287,12 +267,40 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	std::cout<<"Creating IoTP Client with properties"<<std::endl;
-	IOTP_DeviceClient client(prop);
-	//iotp_device_client_ptr client (prop);
 
 	try {
-		//Connecting to client
+
+		//Qick start mode
+		prop.setorgId("quickstart");
+		prop.setdeviceType("devicetest");
+		prop.setdeviceId("haritestdevice");
+
+
+		std::cout<<"Creating IoTP Client with properties for quickstart mode"<<std::endl;
+		IOTP_DeviceClient quickClient(prop);
+		std::cout << "Connecting quick start client to Watson IoT platform" << std::endl;
+		success = quickClient.connect();
+		std::flush(std::cout);
+		if (!success){
+			std::cout<<"Connection failed\n";
+			return 1;
+		}
+
+		std::cout<<"Connection successful"<<std::endl;
+
+		jsonMessage = "{\"Data\": {\"Temp\": \"34\" } }"; //fastWriter.write(jsonPayload);
+		std::cout << "Publishing event:" << std::endl << jsonMessage << std::endl
+				<< std::flush;
+		// First publish event without listner.
+		quickClient.publishEvent("status", "json", jsonMessage.c_str(), 1);
+		std::cout<<"Published success\n";
+		quickClient.disconnect();
+		std::cout<<"Disconnected qucik start client"<<std::endl;
+
+		//Registered device flow properties reading from configuration file in json format
+		std::cout<<"Creating IoTP Client with properties"<<std::endl;
+		IOTP_DeviceClient client(prop);
+		client.setKeepAliveInterval(90);
 		std::cout<<"Connecting client to Watson IoT platform"<<std::endl;
 		success = client.connect();
 		std::cout<<"Connected client to Watson IoT platform"<<std::endl;
@@ -302,7 +310,6 @@ int main(int argc, char **argv) {
 
 		MyCommandCallback myCallback;
 		client.setCommandHandler(&myCallback);
-		client.subscribeCommands();
 		Json::Value jsonPayload;
 		Json::Value jsonText;
 
@@ -318,39 +325,23 @@ int main(int argc, char **argv) {
 		client.disconnect();
 		std::cout << "Disconnected registered client\n";
 
-		const Json::Value devInfo = root["DeviceInfo"];
-		const Json::Value devLocation = root["DeviceLocation"];
-		const Json::Value devMetaData = root["MetaData"];
+		//Creating Device data from json file
+		iotf_device_data_ptr deviceDataPtr;
+		fillDeviceData(argv[1], deviceDataPtr);
 
-
-		//IOTP_DeviceInfo deviceInfo(devInfo);
-
-		iotf_device_info_ptr deviceInfoPtr = std::make_shared<IOTP_DeviceInfo>(devInfo);
-
-		iotf_device_location_ptr deviceLocationPtr = std::make_shared<IOTP_DeviceLocation>(devLocation);
-
-		iotp_firmware_info_ptr deviceFirmwarePtr = std::make_shared<IOTP_FirmwareInfo>("name", "version", "uri", "verifier");
-		iotf_device_metadata_ptr deviceMetaDataPtr = std::make_shared<IOTP_DeviceMetadata>(devMetaData);
-		iotf_device_data_ptr deviceDataPtr = std::make_shared<IOTP_DeviceData>
-			(deviceInfoPtr, deviceLocationPtr, deviceFirmwarePtr, deviceMetaDataPtr);
-
-		iotp_device_action_handler_ptr ptr = std::make_shared<SampleDeviceAction>();
-
+		//creating action handler
+		iotp_device_action_handler_ptr actionPtr = std::make_shared<SampleDeviceAction>();
+		//creating firmware handler
 		iotp_device_firmware_handler_ptr fwPtr = std::make_shared<SampleFirmwareAction>();
-
+		//creating device attribute handler
 		iotp_device_attribute_handler_ptr devAttributePtr = std::make_shared<SampleDeviceAttributeAction>();
 
 
-		std::string deviceType = prop.getdeviceType().c_str();
-		std::string deviceId = prop.getdeviceId().c_str();
+//		std::string deviceType = prop.getdeviceType().c_str();
+//		std::string deviceId = prop.getdeviceId().c_str();
 
-
-		//IOTP_Device device(client, deviceType, deviceId, &deviceInfo, ptr, fwPtr);
-		//iotp_device_action_handler_ptr = newactionHandler;
-		//iotp_device_firmware_handler_ptr firmwareHandler;
 		std::cout<<"Creating Managed Client\n";
-		IOTP_DeviceClient managedClient(prop, deviceDataPtr, ptr, fwPtr, devAttributePtr);
-		//iotp_device_client_ptr  managedClient(prop, deviceDataPtr, ptr, fwPtr, devAttributePtr);
+		IOTP_DeviceClient managedClient(prop, deviceDataPtr, actionPtr, fwPtr, devAttributePtr);
 
 		std::cout<<"Managed client created"<<std::endl;
 		success = managedClient.connect();
@@ -358,8 +349,6 @@ int main(int argc, char **argv) {
 			return 1;
 
 		managedClient.setCommandHandler(&myCallback);
-		managedClient.subscribeCommands();
-
 		managedClient.setLifetime(3600);
 
 		int count = 0;
@@ -453,6 +442,39 @@ int main(int argc, char **argv) {
  	return 0;
 }
 
+void fillDeviceData(const std::string& filePath, iotf_device_data_ptr& deviceDataPtr) {
+	Json::Reader reader;
+	Json::Value root;
+	std::filebuf fb;
+	if (fb.open(filePath, std::ios::in)) {
+		std::istream is(&fb);
+		if (!reader.parse(is, root)) {
+			std::cout << "Failed to parse test configuration from input file "
+					<< filePath << std::endl;
+			fb.close();
+			return 0;
+		}
+		fb.close();
+	}
+
+	const Json::Value devInfo = root["DeviceInfo"];
+	const Json::Value devLocation = root["DeviceLocation"];
+	const Json::Value devMetaData = root["MetaData"];
+
+	iotf_device_info_ptr deviceInfoPtr = std::make_shared < IOTP_DeviceInfo
+			> (devInfo);
+
+	iotf_device_location_ptr deviceLocationPtr = std::make_shared
+			< IOTP_DeviceLocation > (devLocation);
+
+	iotp_firmware_info_ptr deviceFirmwarePtr = std::make_shared
+			< IOTP_FirmwareInfo > ("name", "version", "uri", "verifier");
+	iotf_device_metadata_ptr deviceMetaDataPtr = std::make_shared
+			< IOTP_DeviceMetadata > (devMetaData);
+	deviceDataPtr =
+			std::make_shared < IOTP_DeviceData
+					> (deviceInfoPtr, deviceLocationPtr, deviceFirmwarePtr, deviceMetaDataPtr);
+}
 int InitializeProperties(const std::string& filePath,Properties& prop) {
 	Json::Reader reader;
 	Json::Value root;

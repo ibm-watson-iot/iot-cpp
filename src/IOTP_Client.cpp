@@ -218,6 +218,7 @@ namespace Watson_IOTP {
 		mFirmwareHandler = nullptr;
 		mResponseHandler = std::make_shared<IOTP_ResponseHandler> ();
 		mReplyThread = std::thread(&IOTP_Client::_send_reply, this);
+		mKeepAliveInterval = 60;
 	}
 
 	// IOTF_Client constructors and methods
