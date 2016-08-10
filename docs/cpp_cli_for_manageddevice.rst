@@ -1,13 +1,13 @@
 ======================================
-Java Client Library - Managed Device
+C++ Client Library - Managed Device
 ======================================
 
 Introduction
 -------------
 
-This client library describes how to use devices with the Java WIoTP client library. For help with getting started with this module, see `Java Client Library - Introduction <https://github.com/ibm-messaging/iot-java/blob/master/README.md>`__. 
+This client library describes how to use devices with the C++ WIoTP client library. For help with getting started with this module, see `C++ Client Library - Introduction <https://github.com/ibm-watson-iot/iot-cpp/blob/master/README.md>`__. 
 
-This section contains information on how devices can connect to the Internet of Things Platform Device Management service using Java and perform device management operations like firmware update, location update, and diagnostics update.
+This section contains information on how devices can connect to the Internet of Things Platform Device Management service using C++ and perform device management operations like firmware update, location update, and diagnostics update.
 
 ----
 
@@ -31,36 +31,47 @@ The device model in the WIoTP client library is represented as DeviceData and to
 * DeviceFirmware (Optional)
 * DeviceMetadata (optional)
 
-The following code snippet shows how to create the object DeviceInfo along with DeviceMetadata with sample data:
+The following code snippet shows how to create the DeviceData object from the json file:
 
-.. code:: java
+.. code:: C++
 
-     DeviceInfo deviceInfo = new DeviceInfo.Builder().
-				serialNumber("10087").
-				manufacturer("IBM").
-				model("7865").
-				deviceClass("A").
-				description("My RasPi Device").
-				fwVersion("1.0.0").
-				hwVersion("1.0").
-				descriptiveLocation("EGL C").
-				build();
-	
-     /**
-       * Create a DeviceMetadata object 
-      **/
-     JsonObject data = new JsonObject();
-     data.addProperty("customField", "customValue");
-     DeviceMetadata metadata = new DeviceMetadata(data);
+	void fillDeviceData(const std::string& filePath, iotf_device_data_ptr& deviceDataPtr) {
+	Json::Reader reader;
+	Json::Value root;
+	std::filebuf fb;
+	if (fb.open(filePath, std::ios::in)) {
+		std::istream is(&fb);
+		if (!reader.parse(is, root)) {
+			std::cout << "Failed to parse test configuration from input file "
+					<< filePath << std::endl;
+			fb.close();
+			return 0;
+		}
+		fb.close();
+	}
 
-The following code snippet shows how to create the DeviceData object with the above created DeviceInfo and DeviceMetadata objects:
+	const Json::Value devInfo = root["DeviceInfo"];
+	const Json::Value devLocation = root["DeviceLocation"];
+	const Json::Value devMetaData = root["MetaData"];
 
-.. code:: java
+	iotf_device_info_ptr deviceInfoPtr = std::make_shared < IOTP_DeviceInfo
+			> (devInfo);
 
-	DeviceData deviceData = new DeviceData.Builder().
-				 deviceInfo(deviceInfo).
-				 metadata(metadata).
-				 build();
+	iotf_device_location_ptr deviceLocationPtr = std::make_shared
+			< IOTP_DeviceLocation > (devLocation);
+
+	iotp_firmware_info_ptr deviceFirmwarePtr = std::make_shared
+			< IOTP_FirmwareInfo > ("name", "version", "uri", "verifier");
+	iotf_device_metadata_ptr deviceMetaDataPtr = std::make_shared
+			< IOTP_DeviceMetadata > (devMetaData);
+	deviceDataPtr =
+			std::make_shared < IOTP_DeviceData > (deviceInfoPtr, deviceLocationPtr, deviceFirmwarePtr, deviceMetaDataPtr);
+	}
+	//Code will read the device data from json file
+	//Creating Device data from json file
+	iotf_device_data_ptr deviceDataPtr;
+	fillDeviceData(argv[1], deviceDataPtr);
+
 ----
 
 Construct ManagedDevice
@@ -79,71 +90,53 @@ Constructs a ManagedDevice instance by accepting the DeviceData and the followin
 * Device-ID - The ID of your device.
 * Authentication-Method - Method of authentication (The only value currently supported is "token"). 
 * Authentication-Token - API key token
-* clean-session - true or false (required only if you want to connect the device in durable subscription. By default the clean-session is set to true).
-
-**Note:** One must set clean-session to false to connect the device in durable subscription. Refer to `Subscription Buffers and Clean Session <https://docs.internetofthings.ibmcloud.com/reference/mqtt/index.html#/subscription-buffers-and-clean-session#subscription-buffers-and-clean-session>`__ for more information about the clean session.
-
 
 All these properties are required to interact with the IBM Watson Internet of Things Platform. 
 
 The following code shows how to create a ManagedDevice instance:
 
-.. code:: java
+.. code:: C++
 
-	Properties options = new Properties();
-	options.setProperty("Organization-ID", "uguhsp");
-	options.setProperty("Device-Type", "iotsample-arduino");
-	options.setProperty("Device-ID", "00aabbccde03");
-	options.setProperty("Authentication-Method", "token");
-	options.setProperty("Authentication-Token", "AUTH TOKEN FOR DEVICE");
+	Properties prop;
+	prop.setorgId("uguhsp");
+	prop.setdeviceType("iotsample-arduino");
+	prop.setdeviceId("00aabbccde03");
+	prop.setauthMethod("token");
+	prop.setauthToken("AUTH TOKEN FOR DEVICE");
 	
-	ManagedDevice managedDevice = new ManagedDevice(options, deviceData);
+	IOTP_DeviceClient managedClient(prop, deviceDataPtr);
  
-The existing users of DeviceClient might observe that the names of these properties have changed slightly. These names have been changed to mirror the names in the IBM Watson Internet of Things Platform Dashboard, but the existing users who want to migrate from the DeviceClient to the ManagedDevice can still use the old format and construct the ManagedDevice instance as follows:
-
-.. code:: java
-
-	Properties options = new Properties();
-	options.setProperty("org", "uguhsp");
-	options.setProperty("type", "iotsample-arduino");
-	options.setProperty("id", "00aabbccde03");
-	options.setProperty("auth-method", "token");
-	options.setProperty("auth-token", "AUTH TOKEN FOR DEVICE");
-	ManagedDevice managedDevice = new ManagedDevice(options, deviceData);
 
 **Constructor Two**
 
-Construct a ManagedDevice instance by accepting the DeviceData and the MqttClient instance. This constructor requires the DeviceData to be created with additional device attributes like Device Type and Device Id as follows:
+Construct a ManagedDevice instance by accepting the DeviceData and the device action handler, firmware handler and device attribute handler. This constructor helps in calling the handlers when a particular manage request is sent for the device. construction for this type type is explained as follows:
 
-.. code:: java
+.. code:: C++
 	
-	// Code that constructs the MqttClient (either Synchronous or Asynchronous MqttClient)
-	.....
-	
-	// Code that constructs the DeviceData
-	DeviceData deviceData = new DeviceData.Builder().
-				 typeId("Device-Type").
-				 deviceId("Device-ID").
-				 deviceInfo(deviceInfo).
-				 metadata(metadata).
-				 build();
-	
-	....
-	ManagedDevice managedDevice = new ManagedDevice(mqttClient, deviceData);
-	
-Note this constructor helps the custom device users to create a ManagedDevice instance with the already created and connected MqttClient instance to take advantage of device management operations. But we recommend the users to use the library for all the device functionalities.
+	//Creating Device data from json file
+	iotf_device_data_ptr deviceDataPtr;
+	fillDeviceData(argv[2], deviceDataPtr);
 
+	//creating action handler
+	iotp_device_action_handler_ptr ptr = std::make_shared<SampleDeviceAction>();
+	//creating firmware handler
+	iotp_device_firmware_handler_ptr fwPtr = std::make_shared<SampleFirmwareAction>();
+	//creating device attribute handler
+	iotp_device_attribute_handler_ptr devAttributePtr = std::make_shared<SampleDeviceAttributeAction>();
+	std::cout<<"Creating Managed Client\n";
+	IOTP_DeviceClient managedClient(prop, deviceDataPtr, ptr, fwPtr, devAttributePtr);
+	
 ----
 
 Manage	
 ------------------------------------------------------------------
-The device can invoke sendManageRequest() method to participate in device management activities. The manage request will initiate a connect request internally if the device is not connected to the IBM Watson Internet of Things Platform already:
+The device can invoke manage() method to participate in device management activities. The manage request will initiate a connect request internally if the device is not connected to the IBM Watson Internet of Things Platform already:
 
-.. code:: java
+.. code:: C++
 
-	managedDevice.sendManageRequest(0, true, true);
+	managedDevice.manage();
 	
-As shown, this method accepts following 3 parameters,
+Before calling manage manage request the life time can be set. By default lifetime will be set for 3600Secs (1 hour)
 
 * *lifetime* The length of time in seconds within which the device must send another **Manage device** request in order to avoid being reverted to an unmanaged device and marked as dormant. If set to 0, the managed device will not become dormant. When set, the minimum supported setting is 3600 (1 hour).
 * *supportFirmwareActions* Tells whether the device supports firmware actions or not. The device must add a firmware handler to handle the firmware requests.
@@ -159,9 +152,9 @@ Unmanage
 
 A device can invoke sendUnmanageRequest() method when it no longer needs to be managed. The IBM Watson Internet of Things Platform will no longer send new device management requests to this device and all device management requests from this device will be rejected other than a **Manage device** request.
 
-.. code:: java
+.. code:: C++
 
-	managedDevice.sendUnmanageRequest();
+	managedDevice.unmanage();
 
 Refer to the `documentation <https://docs.internetofthings.ibmcloud.com/devices/device_mgmt/index.html#/unmanage-device#unmanage-device>`__ for more information about the Unmanage operation.
 
@@ -172,15 +165,15 @@ Location Update
 
 Devices that can determine their location can choose to notify the IBM Watson Internet of Things Platform about location changes. The Device can invoke one of the overloaded updateLocation() method to update the location of the device. 
 
-.. code:: java
+.. code:: C++
 
-    // update the location with latitude, longitude and elevation
-    int rc = managedDevice.updateLocation(30.28565, -97.73921, 10);
-    if(rc == 200) {
-        System.out.println("Location updated successfully !!");
-    } else {
-     	System.err.println("Failed to update the location !!");
-    }
+    	// update the location with latitude, longitude and elevation
+    	IOTP_DeviceLocation deviceLocation(x,y,z);
+	success = managedClient.update_device_location(deviceLocation);
+	if (success == false)
+		std::cout << "Failed to update device location to IOTF" << std::endl;
+	else
+		std::cout<< "Updated device location"<<std::endl;
 
 Refer to the `documentation <https://docs.internetofthings.ibmcloud.com/devices/device_mgmt/index.html#/update-location#update-location>`__ for more information about the Location update.
 
@@ -191,13 +184,13 @@ Append/Clear ErrorCodes
 
 Devices can choose to notify the IBM Watson Internet of Things Platform about changes in their error status. The Device can invoke  addErrorCode() method to add the current errorcode to Watson IoT Platform.
 
-.. code:: java
+.. code:: C++
 
-	int rc = managedDevice.addErrorCode(300);
+	int rc = managedDevice.addErrorCodes(300);
 
 Also, the ErrorCodes can be cleared from IBM Watson Internet of Things Platform by calling the clearErrorCodes() method as follows:
 
-.. code:: java
+.. code:: C++
 
 	int rc = managedDevice.clearErrorCodes();
 
@@ -207,233 +200,31 @@ Append/Clear Log messages
 -----------------------------
 Devices can choose to notify the IBM Watson Internet of Things Platform about changes by adding a new log entry. Log entry includes a log messages, its timestamp and severity, as well as an optional base64-encoded binary diagnostic data. The Devices can invoke addLog() method to send log messages,
 
-.. code:: java
+.. code:: C++
 	// An example Log event
-	String message = "Firmware Download Progress (%): " + 50;
-	Date timestamp = new Date();
-	LogSeverity severity = LogSeverity.informational;
-	int rc = managedDevice.addLog(message, timestamp, severity);
+	std::string logMessage = "Test Log Message";
+	std::string timestamp = "2016-07-05T08:15:30-05:00";
+	int sev = 1;
+	std::string data = "Data";
+	IOTP_DeviceLog deviceLog(logMessage, timestamp, sev, data);
+	success = managedClient.addLogs(deviceLog);
+	if (success == false)
+		std::cout << "Failed Adding logs to the Watson IoT Platform" << std::endl;
+	else
+		std::cout<< "Adding logs succeeded"<<std::endl;
 	
 Also, the log messages can be cleared from IBM Watson Internet of Things Platform by calling the clearLogs() method as follows:
 
-.. code:: java
+.. code:: C++
 
-	rc = managedDevice.clearLogs();
-
+	success = managedClient.clearLogs();
+	
 The device diagnostics operations are intended to provide information on device errors, and does not provide diagnostic information relating to the devices connection to the IBM Watson Internet of Things Platform.
 
 Refer to the `documentation <https://docs.internetofthings.ibmcloud.com/devices/device_mgmt/index.html#/update-location#update-location>`__ for more information about the Diagnostics operation.
 
 ----
 
-Firmware Actions
--------------------------------------------------------------
-The firmware update process is separated into two distinct actions:
-
-* Downloading Firmware 
-* Updating Firmware. 
-
-The device needs to do the following activities to support Firmware Actions:
-
-**1. Construct DeviceFirmware Object (Optional)**
-
-In order to perform Firmware actions the device can optionally construct the DeviceFirmware object and add it to DeviceData as follows:
-
-.. code:: java
-
-	DeviceFirmware firmware = new DeviceFirmware.Builder().
-				version("Firmware.version").
-				name("Firmware.name").
-				url("Firmware.url").
-				verifier("Firmware.verifier").
-				state(FirmwareState.IDLE).				
-				build();
-				
-	DeviceData deviceData = new DeviceData.Builder().
-				deviceInfo(deviceInfo).
-				deviceFirmware(firmware).
-				metadata(metadata).
-				build();
-	
-	ManagedDevice managedDevice = new ManagedDevice(options, deviceData);
-	managedDevice.connect();
-		
-
-The DeviceFirmware object represents the current firmware of the device and will be used to report the status of the Firmware Download and Firmware Update actions to IBM Watson Internet of Things Platform. In case this DeviceFirmware object is not constructed by the device, then the library creates an empty object and reports the status to Watson IoT Platform.
-
-**2. Inform the server about the Firmware action support**
-
-The device needs to set the firmware action flag to true in order for the server to initiate the firmware request. This can be achieved by invoking the sendManageRequest() method with a true value for supportFirmwareActions parameter,
-
-.. code:: java
-
-    	managedDevice.sendManageRequest(3600, true, false);
-
-Once the support is informed to the DM server, the server then forwards the firmware actions to the device.
-
-**3. Create the Firmware Action Handler**
-
-In order to support the Firmware action, the device needs to create a handler and add it to ManagedDevice. The handler must extend a DeviceFirmwareHandler class and implement the following methods:
-
-.. code:: java
-
-	public abstract void downloadFirmware(DeviceFirmware deviceFirmware);
-	public abstract void updateFirmware(DeviceFirmware deviceFirmware);
-
-**3.1 Sample implementation of downloadFirmware**
-
-The implementation must create a separate thread and add a logic to download the firmware and report the status of the download via DeviceFirmware object. If the Firmware Download operation is successful, then the state of the firmware to be set to DOWNLOADED and UpdateStatus should be set to SUCCESS.
-
-If an error occurs during Firmware Download the state should be set to IDLE and updateStatus should be set to one of the error status values:
-
-* OUT_OF_MEMORY
-* CONNECTION_LOST
-* INVALID_URI
-
-A sample Firmware Download implementation for a Raspberry Pi device is shown below:
-
-.. code:: java
-
-	public void downloadFirmware(DeviceFirmware deviceFirmware) {
-		boolean success = false;
-		URL firmwareURL = null;
-		URLConnection urlConnection = null;
-		
-		try {
-			firmwareURL = new URL(deviceFirmware.getUrl());
-			urlConnection = firmwareURL.openConnection();
-			if(deviceFirmware.getName() != null) {
-				downloadedFirmwareName = deviceFirmware.getName();
-			} else {
-				// use the timestamp as the name
-				downloadedFirmwareName = "firmware_" +new Date().getTime()+".deb";
-			}
-			
-			File file = new File(downloadedFirmwareName);
-			BufferedInputStream bis = new BufferedInputStream(urlConnection.getInputStream());
-			BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file.getName()));
-			
-			int data = bis.read();
-			if(data != -1) {
-				bos.write(data);
-				byte[] block = new byte[1024];
-				while (true) {
-					int len = bis.read(block, 0, block.length);
-					if(len != -1) {
-						bos.write(block, 0, len);
-					} else {
-						break;
-					}
-				}
-				bos.close();
-				bis.close();
-				success = true;
-			} else {
-				//There is no data to read, so set an error
-				deviceFirmware.setUpdateStatus(FirmwareUpdateStatus.INVALID_URI);
-			}
-		} catch(MalformedURLException me) {
-			// Invalid URL, so set the status to reflect the same,
-			deviceFirmware.setUpdateStatus(FirmwareUpdateStatus.INVALID_URI);
-		} catch (IOException e) {
-			deviceFirmware.setUpdateStatus(FirmwareUpdateStatus.CONNECTION_LOST);
-		} catch (OutOfMemoryError oom) {
-			deviceFirmware.setUpdateStatus(FirmwareUpdateStatus.OUT_OF_MEMORY);
-		}
-		
-		if(success == true) {
-			deviceFirmware.setUpdateStatus(FirmwareUpdateStatus.SUCCESS);
-			deviceFirmware.setState(FirmwareState.DOWNLOADED);
-		} else {
-			deviceFirmware.setState(FirmwareState.IDLE);
-		}
-	}
-
-Device can check the integrity of the downloaded firmware image using the verifier and report the status back to IBM Watson Internet of Things Platform. The verifier can be set by the device during the startup (while creating the DeviceFirmware Object) or as part of the Download Firmware request by the application. A sample code to verify the same is below:
-
-.. code:: java
-
-	private boolean verifyFirmware(File file, String verifier) throws IOException {
-		FileInputStream fis = null;
-		String md5 = null;
-		try {
-			fis = new FileInputStream(file);
-			md5 = org.apache.commons.codec.digest.DigestUtils.md5Hex(fis);
-			System.out.println("Downloaded Firmware MD5 sum:: "+ md5);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			fis.close();
-		}
-		if(verifier.equals(md5)) {
-			System.out.println("Firmware verification successful");
-			return true;
-		}
-		System.out.println("Download firmware checksum verification failed.. "
-				+ "Expected "+verifier + " found "+md5);
-		return false;
-	}
-
-The complete code can be found in the device management sample `RasPiFirmwareHandlerSample <https://github.com/ibm-messaging/iot-device-samples/tree/master/java/device-management-sample/src/main/java/com/ibm/iotf/sample/devicemgmt/device/RasPiFirmwareHandlerSample.java>`__.
-
-**3.2 Sample implementation of updateFirmware**
-
-The implementation must create a separate thread and add a logic to install the downloaded firmware and report the status of the update via DeviceFirmware object. If the Firmware Update operation is successful, then the state of the firmware should to be set to IDLE and UpdateStatus should be set to SUCCESS. 
-
-If an error occurs during Firmware Update, updateStatus should be set to one of the error status values:
-
-* OUT_OF_MEMORY
-* UNSUPPORTED_IMAGE
-			
-A sample Firmware Update implementation for a Raspberry Pi device is shown below:
-
-.. code:: java
-	
-	public void updateFirmware(DeviceFirmware deviceFirmware) {
-		try {
-			ProcessBuilder pkgInstaller = null;
-			Process p = null;
-			pkgInstaller = new ProcessBuilder("sudo", "dpkg", "-i", downloadedFirmwareName);
-			boolean success = false;
-			try {
-				p = pkgInstaller.start();
-				boolean status = waitForCompletion(p, 5);
-				if(status == false) {
-					p.destroy();
-					deviceFirmware.setUpdateStatus(FirmwareUpdateStatus.UNSUPPORTED_IMAGE);
-					return;
-				}
-				System.out.println("Firmware Update command "+status);
-				deviceFirmware.setUpdateStatus(FirmwareUpdateStatus.SUCCESS);
-				deviceFirmware.setState(FirmwareState.IDLE);
-			} catch (IOException e) {
-				e.printStackTrace();
-				deviceFirmware.setUpdateStatus(FirmwareUpdateStatus.UNSUPPORTED_IMAGE);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-				deviceFirmware.setUpdateStatus(FirmwareUpdateStatus.UNSUPPORTED_IMAGE);
-			}
-		} catch (OutOfMemoryError oom) {
-			deviceFirmware.setUpdateStatus(FirmwareUpdateStatus.OUT_OF_MEMORY);
-		}
-	}
-
-The complete code can be found in the device management sample `RasPiFirmwareHandlerSample <https://github.com/ibm-messaging/iot-device-samples/tree/master/java/device-management-sample/src/main/java/com/ibm/iotf/sample/devicemgmt/device/RasPiFirmwareHandlerSample.java>`__.
-
-**4. Add the handler to ManagedDevice**
-
-The created handler needs to be added to the ManagedDevice instance so that the WIoTP client library invokes the corresponding method when there is a Firmware action request from IBM Watson Internet of Things Platform.
-
-.. code:: java
-
-	DeviceFirmwareHandlerSample fwHandler = new DeviceFirmwareHandlerSample();
-	managedDevice.addFirmwareHandler(fwHandler);
-
-Refer to `this page <https://docs.internetofthings.ibmcloud.com/devices/device_mgmt/requests.html#/firmware-actions#firmware-actions>`__ for more information about the Firmware action.
-
-----
 
 Device Actions
 ------------------------------------
@@ -446,22 +237,22 @@ The device needs to do the following activities to support Device Actions:
 
 **1. Inform server about the Device Actions support**
 
-In order to perform Reboot and Factory Reset, the device needs to inform the IBM Watson Internet of Things Platform about its support first. This can be achieved by invoking the sendManageRequest() method with a true value for supportDeviceActions parameter,
+In order to perform Reboot and Factory Reset, the device needs to inform the IBM Watson Internet of Things Platform about its support first. This can be achieved by creating the IOTP_DeviceClient constructor with the action handler parameter,
 
-.. code:: java
+.. code:: C++
 	// Last parameter represents the device action support
-    	managedDevice.sendManageRequest(3600, true, true);
+    	IOTP_DeviceClient managedClient(prop, deviceDataPtr, actionPtr, fwPtr, devAttributePtr);
 
 Once the support is informed to the DM server, the server then forwards the device action requests to the device.
 	
 **2. Create the Device Action Handler**
 
-In order to support the device action, the device needs to create a handler and add it to ManagedDevice. The handler must extend a DeviceActionHandler class and provide implementation for the following methods:
+In order to support the device action, the device needs to create a handler. The handler must extend a IOTP_DeviceActionHandler class and provide implementation for the following methods:
 
-.. code:: java
+.. code:: C++
 
-	public abstract void handleReboot(DeviceAction action);
-	public abstract void handleFactoryReset(DeviceAction action);
+	virtual iotp_device_action_response_ptr reboot() = 0;
+	virtual iotp_device_action_response_ptr factory_reset() = 0;
 
 **2.1 Sample implementation of handleReboot**
 
@@ -469,112 +260,23 @@ The implementation must create a separate thread and add a logic to reboot the d
 
 .. code:: java
 
-	@Override
-	public void handleReboot(DeviceAction action) {
-		// set the support before handing over to the pool
-		action.setStatus(Status.ACCEPTED);
-		RebootTask task = new RebootTask(action, this);
-		executor.execute(task);
+	iotp_device_action_response_ptr reboot() {
+		std::cout << "MyDeviceAction: reboot " << std::endl;
+		IOTP_DeviceActionResponse rsp(DEVICE_ACTION_REBOOT_OK);
+		mReboot = true;
+		return std::make_shared<IOTP_DeviceActionResponse>(rsp);
 	}
 	
-	private static class RebootTask implements Runnable {
-		
-		private DeviceAction action;
-		private DeviceActionHandlerSample handler;
-
-		public RebootTask(DeviceAction deviceAction, DeviceActionHandlerSample handler) {
-			this.action = deviceAction;
-			this.handler = handler;
-		}
-
-		@Override
-		public void run() {
-
-			ProcessBuilder processBuilder = null;
-			Process p = null;
-			
-			String osname = System.getProperty("os.name");
-			
-			if(osname.startsWith("Windows")) {
-				processBuilder = new ProcessBuilder("shutdown", "-r");
-			} else {
-				processBuilder = new ProcessBuilder("sudo", "shutdown", "-r", "now");
-			}
-	
-			processBuilder.redirectErrorStream(true);
-			processBuilder.inheritIO();
-			
-			
-			boolean status = false;
-			try {
-				p = processBuilder.start();
-				// wait for say 2 minutes before giving it up
-				status = waitForCompletion(p, 2);
-				System.out.println("Executed restart command "+status);
-			} catch (IOException e) {
-				action.setMessage(e.getMessage());
-			} catch (InterruptedException e) {
-				action.setMessage(e.getMessage());
-			}
-			
-			System.out.println("Executed restart command status ("+status+")");
-			if(status == false) {
-				action.setStatus(DeviceAction.Status.FAILED);
-			}
-			
-		}
-	}
-	
-
-The complete code can be found in the device management sample `DeviceActionHandlerSample <https://github.com/ibm-messaging/iot-device-samples/tree/master/java/device-management-sample/src/main/java/com/ibm/iotf/sample/devicemgmt/device/DeviceActionHandlerSample.java>`__.
-
-**2.2 Sample implementation of handleFactoryReset**
-
-The implementation must create a separate thread and add a logic to reset the device to factory settings and report the status via DeviceAction object. Upon receiving the request, the device first needs to inform the server about the support(or failure) before proceeding with the actual reset. And if the sample can not reset the device or any other error during the reset, the device can update the status along with an optional message. The skeleton of the Factory Reset implementation is shown below:
-
-.. code:: java
-	
-	@Override
-	public void handleFactoryReset(DeviceAction action) {
-		/*FactoryResetTask task = new FactoryResetTask(action, this);
-		executor.execute(task);*/
-		
-		// As the sample doesn't support factory Rest, it just sends unsupported message now
-		action.setStatus(Status.UNSUPPORTED);
-		// Optionally set a message
-		action.setMessage("Not supported at the moment");
-	}
-	
-	private static class FactoryResetTask implements Runnable {
-		
-		private DeviceAction action;
-		private DeviceActionHandlerSample handler;
-
-		public FactoryResetTask(DeviceAction deviceAction, DeviceActionHandlerSample handler) {
-			this.action = deviceAction;
-			this.handler = handler;
-		}
-
-		@Override
-		public void run() {
-			/**
-			 * This sample doesn't support factory reset, so respond accordingly
-			 */
-			action.setStatus(DeviceAction.Status.UNSUPPORTED);
-		}
-	}
-	
+	In the similar lines factory_reset can be implemented.
 
 **3. Add the handler to ManagedDevice**
 
 The created handler needs to be added to the ManagedDevice instance so that the WIoTP client library invokes the corresponding method when there is a device action request from IBM Watson Internet of Things Platform.
 
-.. code:: java
+.. code:: C++
 
-	DeviceActionHandlerSample actionHandler = new DeviceActionHandlerSample();
-	managedDevice.addDeviceActionHandler(actionHandler);
-
-Refer to `this page <https://docs.internetofthings.ibmcloud.com/devices/device_mgmt/requests.html#/device-actions-reboot#device-actions-reboot>`__ for more information about the Device Action.
+	iotp_device_action_handler_ptr actionPtr = std::make_shared<SampleDeviceAction>();
+	IOTP_DeviceClient managedClient(prop, deviceDataPtr, actionPtr, fwPtr, devAttributePtr);
 
 ----
 
@@ -585,66 +287,41 @@ This WIoTP client library updates the corresponding objects whenever there is an
 
 Attributes that can be updated by this operation are location, metadata, device information and firmware.
 
-In order to get notified, the device needs to add a property change listener on those objects that it is interested.
+In order to get notified, the device needs to add a device attribute handler while creating managed device.
 
-.. code:: java
+.. code:: C++
 
-	deviceLocation.addPropertyChangeListener(listener);
-	firmware.addPropertyChangeListener(listener);
-	deviceInfo.addPropertyChangeListener(listener);
-	metadata.addPropertyChangeListener(listener);
+	//creating device attribute handler
+	iotp_device_attribute_handler_ptr devAttributePtr = std::make_shared<SampleDeviceAttributeAction>();
 	
-Also, the device needs to implement the propertyChange() method where it receives the notification. A sample implementation is as follows:
+Handler will be notified when ever platform sends an update request for the change in the device attributes:
+Currently it is supported only with location update handler. Find the code below for the implementation of the handler. Custom handler needs to implemnt IOTP_DeviceAttributeHandler. 
 
-.. code:: java
+.. code:: C++
 
-	public void propertyChange(PropertyChangeEvent evt) {
-		if(evt.getNewValue() == null) {
-			return;
-		}
-		Object value = (Object) evt.getNewValue();
-		
-		switch(evt.getPropertyName()) {
-			case "metadata":
-				DeviceMetadata metadata = (DeviceMetadata) value;
-				System.out.println("Received an updated metadata -- "+ metadata);
-				break;
-			
-			case "location":
-				DeviceLocation location = (DeviceLocation) value;
-				System.out.println("Received an updated location -- "+ location);
-				break;
-			
-			case "deviceInfo":
-				DeviceInfo info = (DeviceInfo) value;
-				System.out.println("Received an updated device info -- "+ info);
-				break;
-				
-			case "mgmt.firmware":
-				DeviceFirmware firmware = (DeviceFirmware) value;
-				System.out.println("Received an updated device firmware -- "+ firmware);
-				break;		
-		}
+	class SampleDeviceAttributeAction : public IOTP_DeviceAttributeHandler {
+	public:
+	SampleDeviceAttributeAction(){}
+	~SampleDeviceAttributeAction() {}
+
+	virtual bool UpdateLocation(iotf_device_location_ptr& locationPtr)  {
+		std::cout << "ENTRY Update Location\n";
+		std::cout << "Longitude: " << locationPtr->getLongitude() << " Latitude: " << locationPtr->getLatitude() << std::endl;
+			//iotp_device_attribute_update_response_ptr ptr = std::make_shared<IOTP_DeviceAttributeUpdateResponse>(200);
+		return true;
 	}
+};
+
+----
+
+Adding the handler to the managed device.
+
+.. code:: C++
+
+	iotp_device_attribute_handler_ptr devAttributePtr = std::make_shared<SampleDeviceAttributeAction>();
+	IOTP_DeviceClient managedClient(prop, deviceDataPtr, actionPtr, fwPtr, devAttributePtr);
 
 Refer to `this page <https://docs.internetofthings.ibmcloud.com/devices/device_mgmt/index.html#/update-device-attributes#update-device-attributes>`__ for more information about updating the device attributes.
 
 ----
 
-Examples
--------------
-* `SampleRasPiDMAgent <https://github.com/ibm-messaging/iot-device-samples/tree/master/java/device-management-sample/src/main/java/com/ibm/iotf/sample/devicemgmt/device/SampleRasPiDMAgent.java>`__ - A sample agent code that shows how to perform various device management operations on Raspberry Pi.
-* `SampleRasPiManagedDevice <https://github.com/ibm-messaging/iot-device-samples/tree/master/java/device-management-sample/src/main/java/com/ibm/iotf/sample/devicemgmt/device/SampleRasPiManagedDevice.java>`__ - A sample code that shows how one can perform both device operations and management operations.
-* `SampleRasPiDMAgentWithCustomMqttAsyncClient <https://github.com/ibm-messaging/iot-device-samples/tree/master/java/device-management-sample/src/main/java/com/ibm/iotf/sample/devicemgmt/device/SampleRasPiDMAgentWithCustomMqttAsyncClient.java>`__ - A sample agent code with custom MqttAsyncClient.
-* `SampleRasPiDMAgentWithCustomMqttClient <https://github.com/ibm-messaging/iot-device-samples/tree/master/java/device-management-sample/src/main/java/com/ibm/iotf/sample/devicemgmt/device/SampleRasPiDMAgentWithCustomMqttClient.java>`__ - A sample agent code with custom MqttClient.
-* `RasPiFirmwareHandlerSample <https://github.com/ibm-messaging/iot-device-samples/tree/master/java/device-management-sample/src/main/java/com/ibm/iotf/sample/devicemgmt/device/RasPiFirmwareHandlerSample.java>`__ - A sample implementation of FirmwareHandler for Raspberry Pi.
-* `DeviceActionHandlerSample <https://github.com/ibm-messaging/iot-device-samples/tree/master/java/device-management-sample/src/main/java/com/ibm/iotf/sample/devicemgmt/device/DeviceActionHandlerSample.java>`__ - A sample implementation of DeviceActionHandler
-* `ManagedDeviceWithLifetimeSample <https://github.com/ibm-messaging/iot-device-samples/tree/master/java/device-management-sample/src/main/java/com/ibm/iotf/sample/devicemgmt/device/ManagedDeviceWithLifetimeSample.java>`__ - A sample that shows how to send regular manage request with lifetime specified.
-* `DeviceAttributesUpdateListenerSample <https://github.com/ibm-messaging/iot-device-samples/tree/master/java/device-management-sample/src/main/java/com/ibm/iotf/sample/devicemgmt/device/DeviceAttributesUpdateListenerSample.java>`__ - A sample listener code that shows how to listen for a various device attribute changes.
-
-----
-
-Recipe
-----------
-
-Refer to `the recipe <https://developer.ibm.com/recipes/tutorials/connect-raspberry-pi-as-managed-device-to-ibm-iot-foundation/>`__ that shows how to connect the Raspberry Pi device as managed device to IBM Watson Internet of Things Platform to perform various device management operations in step by step using this client library.
