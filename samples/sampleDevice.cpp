@@ -271,34 +271,8 @@ int main(int argc, char **argv) {
 
 	try {
 
-		//Qick start mode
-		quickProp.setorgId("quickstart");
-		quickProp.setdeviceType("devicetest");
-		quickProp.setdeviceId("haritestdevice");
-
-
-		std::cout<<"Creating IoTP Client with properties for quickstart mode"<<std::endl;
-		IOTP_DeviceClient quickClient(quickProp);
-		std::cout << "Connecting quick start client to Watson IoT platform" << std::endl;
-		success = quickClient.connect();
-		std::flush(std::cout);
-		if (!success){
-			std::cout<<"Connection failed\n";
-			return 1;
-		}
-
-		std::cout<<"Connection successful"<<std::endl;
-
-		jsonMessage = "{\"Data\": {\"Temp\": \"34\" } }"; //fastWriter.write(jsonPayload);
-		std::cout << "Publishing event:" << std::endl << jsonMessage << std::endl
-				<< std::flush;
-		// First publish event without listner.
-		quickClient.publishEvent("status", "json", jsonMessage.c_str(), 1);
-		std::cout<<"Published success\n";
-		quickClient.disconnect();
-		std::cout<<"Disconnected qucik start client"<<std::endl;
-
 		//Registered device flow properties reading from configuration file in json format
+		std::cout<<"==================Registered client Mode==========================="<<std::endl;
 		std::cout<<"Creating IoTP Client with properties"<<std::endl;
 		IOTP_DeviceClient client(prop);
 		client.setKeepAliveInterval(90);
@@ -324,9 +298,10 @@ int main(int argc, char **argv) {
 		client.publishEvent("status1", "json", jsonMessage.c_str(), 1, listener);
 		//Disconnect device client
 		client.disconnect();
-		std::cout << "Disconnected registered client\n";
+		std::cout << "===================Disconnected registered client================\n";
 
 		//Creating Device data from json file
+		std::cout<<"==================Managed Device client Mode==========================="<<std::endl;
 		iotf_device_data_ptr deviceDataPtr;
 		fillDeviceData(argv[1], deviceDataPtr);
 
@@ -432,7 +407,7 @@ int main(int argc, char **argv) {
 		// Disconnect
 		std::cout << "Disconnecting..." << std::flush;
 		managedClient.disconnect();
-		std::cout << "OK" << std::endl;
+		std::cout << "===================Disconnected Managed Device====================" << std::endl;
 
 	}
 	catch (const mqtt::exception& exc) {
@@ -499,13 +474,13 @@ int InitializeProperties(const std::string& filePath,Properties& prop) {
 				<< std::endl;
 		return 0;
 	}
+	else
+		prop.setorgId(org);
+
 
 	std::string domain = root.get("domain", "").asString();
-	if (domain.size() == 0) {
-		std::cout << "Failed to get domain from test configuration."
-				<< std::endl;
-		return 0;
-	}
+	if (domain.size() != 0)
+		prop.setdomain(domain);
 
 
 	std::string deviceType = root.get("Device-Type", "").asString();
@@ -514,6 +489,8 @@ int InitializeProperties(const std::string& filePath,Properties& prop) {
 				<< std::endl;
 		return 0;
 	}
+	else
+		prop.setdeviceType(deviceType);
 
 	std::string deviceId = root.get("Device-ID", "").asString();
 	if (deviceId.size() == 0) {
@@ -521,29 +498,30 @@ int InitializeProperties(const std::string& filePath,Properties& prop) {
 				<< std::endl;
 		return 0;
 	}
+	else
+		prop.setdeviceId(deviceId);
 
-	std::string username = root.get("Authentication-Method", "").asString();
-	if (username.size() == 0) {
-		std::cout
-				<< "Failed to get Authentication-Method from test configuration."
+	if(org.compare("quickstart") != 0) {
+		std::string username = root.get("Authentication-Method", "").asString();
+
+		if (username.size() == 0) {
+			std::cout << "Failed to get Device-ID from test configuration."
 				<< std::endl;
-		return 0;
+			return 0;
+		}
+		else
+			prop.setauthMethod(username);
+
+		std::string password = root.get("Authentication-Token", "").asString();
+		if (password.size() == 0) {
+			std::cout << "Failed to get Device-ID from test configuration."
+					<< std::endl;
+			return 0;
+		}
+		else
+			prop.setauthToken(password);
 	}
 
-	std::string password = root.get("Authentication-Token", "").asString();
-	if (password.size() == 0) {
-		std::cout
-				<< "Failed to get Authentication-Token from test configuration."
-				<< std::endl;
-		return 0;
-	}
-
-	prop.setorgId(org);
-	prop.setdomain(domain);
-	prop.setdeviceType(deviceType);
-	prop.setdeviceId(deviceId);
-	prop.setauthMethod(username);
-	prop.setauthToken(password);
 
 	return 1;
 }
