@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
 	//Authentication is omitted in the quickstart flow
 	//Quick start flow properties reading from configuration file in json format
 	std::cout<<"==================quick start client Mode==========================="<<std::endl;
-	std::cout<<"Creating Client with properties"<<prop.getdomain()<<std::endl;
+	std::cout<<"Creating Client with properties"<<std::endl;
 	IOTP_DeviceClient client(prop);
 	client.setKeepAliveInterval(90);
 	std::cout<<"Connecting client to Watson IoT platform"<<std::endl;
