@@ -293,7 +293,7 @@ namespace Watson_IOTP {
 		if (action.success()) {
 			callback_ptr = set_callback();
 		}
-		i
+		
 		if (conntok ->is_complete() == false)
 			return false;
 
