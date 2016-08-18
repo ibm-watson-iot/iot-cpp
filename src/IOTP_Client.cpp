@@ -268,10 +268,8 @@ namespace Watson_IOTP {
 		connectOptions.set_keep_alive_interval(mKeepAliveInterval);
 		std::string usrName;
 		std::string passwd;
-		bool isQuickstart = true;
 
 		if(mProperties.getorgId().compare("quickstart") != 0) {
-			isQuickstart = false;
 			usrName = mProperties.getauthMethod();
 			if(usrName.compare("token") != 0) {
 				std::cout<<"wrong auth-Method supplied.Platform supports auth-method:\"token\""<<std::endl;
@@ -283,27 +281,19 @@ namespace Watson_IOTP {
 			}
 
 			passwd = mProperties.getauthToken();
-		}
-
-		if(isQuickstart == false) {
 			connectOptions.set_user_name(usrName);
 			connectOptions.set_password(passwd);
 		}
 
-		mqtt::itoken_ptr conntok;
-		if(isQuickstart == true) {
-			conntok = pasync_client->connect(connectOptions);
-			conntok->wait_for_completion(DEFAULT_TIMEOUT());
-		}
 
-		else {
+		mqtt::itoken_ptr conntok;
 		conntok = pasync_client->connect(connectOptions, NULL, action);
 		conntok->wait_for_completion(DEFAULT_TIMEOUT());
-		action.success();
-		}
+		
 		if (action.success()) {
 			callback_ptr = set_callback();
 		}
+		i
 		if (conntok ->is_complete() == false)
 			return false;
 
