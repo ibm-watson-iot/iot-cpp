@@ -33,17 +33,22 @@ Build Instructions
 For building the client library and the sample application cmake is required.
 Install cmake by following the instrctions in the link https://cmake.org/install/
 Once cmake is installed 
-1. Go to the build directory under root directory (iot-cpp/build).
-2. Run the command cmake ..
-3. Run the command make
+
+1.  Go to the build directory under root directory (iot-cpp/build).
+2.  Run the command cmake ..
+3.  Run the command make
 All the output files will be created under the build directory.
 
 Running samples
 ---------------
-Go to the samples directory under build (iot-cpp/build/samples)
-Run device client (sampleDevice) with the following command from build directory
+Execute quick start sample (sampleQuickstart) with the following command from build directory
+./samples/sampleQuickstart <Path to quick start configuration file in json format>
+
+Similarly device client (sampleDevice) can be executed with the following command from build directory
 ./samples/sampleDevice <Path to device configuration file in json format>
 
+Similarly gateway client (sampleGateway) can be executed with the following command from build directory
+./samples/sampleGateway <Path to gateway configuration file in json format>
 
 The documentation is divided into following sections:  
 
