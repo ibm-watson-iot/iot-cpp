@@ -28,6 +28,7 @@ private:
 	std::string authToken;
 
 public:
+	Properties(): orgId(""), domain("internetofthings.ibmcloud.com"), deviceType(""), deviceId(""), authMethod(""), authToken(""){}
 	std::string getorgId(){ return orgId;}
 	std::string getdomain(){ return domain;}
 	std::string getdeviceType(){ return deviceType;}

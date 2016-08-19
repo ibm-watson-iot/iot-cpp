@@ -12,7 +12,6 @@
  *
  * Contributors:
  *    Mike Tran - initial API and implementation and/or initial documentation
- *    Hari Prasada reddy - Impelemented changes to add Client library functionality
  *******************************************************************************/
 
 #ifndef IOTF_REPLYMESSAGE_H_

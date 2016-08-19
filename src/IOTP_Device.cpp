@@ -12,7 +12,6 @@
  *
  * Contributors:
  *    Mike Tran - initial API and implementation and/or initial documentation
- *    Hari Prasada Reddy - Added functionalities/documentation to standardize with other client libraries
  *******************************************************************************/
 
 #include <iostream>
@@ -22,6 +21,7 @@
 #include "IOTP_ResponseHandler.h"
 #include "json/json.h"
 #include "mqtt/async_client.h"
+#include <string.h>
 
 namespace Watson_IOTP {
 
@@ -113,6 +113,20 @@ namespace Watson_IOTP {
 		setJsonValue();
 	}
 
+	IOTP_DeviceLocation::IOTP_DeviceLocation(const Json::Value& value) {
+		char measuredDateTimeBuf[sizeof "YYYY-MM-DDTHH:MM:SSZ"];
+		mLatitude = value.get("latitude", 0.0).asDouble();
+		mLongitude = value.get("longitude", 0.0).asDouble();
+		mElevation = value.get("elevation", 0.0).asDouble();
+		mAccuracy = value.get("accuracy", 0.0).asDouble();
+		strcpy(measuredDateTimeBuf , value.get("measuredDateTime", "").asString().data());
+		if(strcmp(measuredDateTimeBuf,""))
+			strptime(measuredDateTimeBuf, "%FT%TZ", gmtime(&measuredDateTime));
+		else
+			time(&measuredDateTime);
+		setJsonValue();
+	}
+
 	void IOTP_DeviceLocation::setLatitude(double latitude) {
 		setLocation(latitude, mLongitude, mElevation);
 	}
@@ -145,7 +159,44 @@ namespace Watson_IOTP {
 		json["accuracy"] = mAccuracy;
 		strftime(measuredDateTimeBuf, sizeof measuredDateTimeBuf, "%FT%TZ", gmtime(&measuredDateTime));
 		json["measuredDateTime"] = measuredDateTimeBuf;
-	};
+	}
+
+	IOTP_DeviceLog::IOTP_DeviceLog(std::string& msg, std::string& time, int severity, std::string data)
+	:mMessage (msg), mMeasuredDateTime (time), mSeverity (severity), mData (data) {
+		setJsonValue();
+	}
+
+	void IOTP_DeviceLog::setLogMessage(std::string& msg) {
+		setLogInfo(msg, mMeasuredDateTime, mSeverity, mData);
+	}
+	void IOTP_DeviceLog::setLogEntryTime(std::string& time){
+		setLogInfo(mMessage, time, mSeverity, mData);
+	}
+	void IOTP_DeviceLog::setLogSeverity(int& sev) {
+		setLogInfo(mMessage, mMeasuredDateTime, sev, mData);
+	}
+	void IOTP_DeviceLog::setLogdata(std::string& data) {
+		setLogInfo(mMessage, mMeasuredDateTime, mSeverity, data);
+	}
+	void IOTP_DeviceLog::setLogInfo(std::string& msg, std::string& time, int& sev, std::string& data) {
+		mMessage = msg;
+		mMeasuredDateTime = time;
+		mSeverity = sev;
+		mData = data;
+		setJsonValue();
+	}
+	const Json::Value& IOTP_DeviceLog::toJsonValue() const {
+		return json;
+	}
+
+	void IOTP_DeviceLog::setJsonValue() {
+		//char measuredDateTimeBuf[sizeof "YYYY-MM-DDTHH:MM:SSZ"];
+		json["message"] = mMessage;
+		json["severity"] = mSeverity;
+		json["data"] = mData;
+		//strftime(measuredDateTimeBuf, sizeof measuredDateTimeBuf, "%FT%TZ", gmtime(&mMeasuredDateTime));
+		json["timestamp"] = mMeasuredDateTime;
+	}
 
 }
 

@@ -19,14 +19,24 @@
 
 class Command{
 private:
+	std::string deviceType;
+	std::string deviceId;
 	std::string commandName;
 	std::string format;
 	std::string payload;
 public:
-	Command(std::string cmdName, std::string fmt, std::string strPayload){
+	Command(std::string type, std::string id, std::string cmdName, std::string fmt, std::string strPayload){
+		deviceType = type;
+		deviceId = id;
 		commandName = cmdName;
 		format = fmt;
 		payload = strPayload;
+	}
+	std::string getDeviceType(){
+		return deviceType;
+	}
+	std::string getDeviceId(){
+		return deviceId;
 	}
 	std::string getCommandName(){
 		return commandName;

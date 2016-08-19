@@ -29,14 +29,12 @@
 #include "IOTP_Device.h"
 #include "IOTP_DeviceActionHandler.h"
 #include "IOTP_DeviceFirmwareHandler.h"
+#include "IOTP_DeviceAttributeHandler.h"
 #include "IOTP_ResponseHandler.h"
 
-//class IOTP_DeviceInfo;
 namespace Watson_IOTP {
 
-	//extern const std::string& SERVER_RESPONSE_TOPIC();
 	extern const unsigned long DEFAULT_TIMEOUT();
-
 
 	class IOTP_Client {
 		private:
@@ -125,16 +123,18 @@ namespace Watson_IOTP {
 			 * the constructor of the base class, mqtt::callback.
 			 */
 			//IOTP_Client(const std::string& uri, const std::string& clientId);
-			IOTP_Client(Properties& prop, Watson_IOTP::IOTP_DeviceInfo* deviceInfo);
+			//IOTP_Client(Properties& prop, Watson_IOTP::IOTP_DeviceInfo* deviceInfo);
+			IOTP_Client(Properties& prop, iotf_device_data_ptr& deviceData);
 
 			/**
 			 * Constructor of an IOTF_Client.
 			 * Required arguments are organization ID, device type and device ID.
 			 */
-			IOTP_Client(Properties& prop, Watson_IOTP::IOTP_DeviceInfo* deviceInfo,
-					iotp_device_action_handler_ptr& actionHandler, iotp_device_firmware_handler_ptr& firmwareHandler);
+			//IOTP_Client(Properties& prop, Watson_IOTP::IOTP_DeviceInfo* deviceInfo,
+			IOTP_Client(Properties& prop, iotp_device_action_handler_ptr& actionHandler,
+					iotp_device_firmware_handler_ptr& firmwareHandler);
 
-			~IOTP_Client();
+			virtual ~IOTP_Client();
 
 
 			/**
@@ -182,26 +182,6 @@ namespace Watson_IOTP {
 			*/
 			void setCommandHandler(CommandCallback* cb) ;
 
-			/**
-			* Function used to Publish events from the device to the IBM Watson IoT service
-			* @param eventType - Type of event to be published e.g status, gps
-			* @param eventFormat - Format of the event e.g json
-			* @param data - Payload of the event
-			* @param QoS - qos for the publish event. Supported values : 0, 1, 2
-			*
-			* @return void
-			*/
-			void publishEvent(char *eventType, char *eventFormat, const char* data, int qos);
-			/**
-			* Function used to Publish events from the device to the IBM Watson IoT service
-			* @param eventType - Type of event to be published e.g status, gps
-			* @param eventFormat - Format of the event e.g json
-			* @param data - Payload of the event
-			* @param QoS - qos for the publish event. Supported values : 0, 1, 2
-			* @param iaction_listener& cb - call back function for action listner
-			* @return void
-			*/
-			void publishEvent(char *eventType, char *eventFormat, const char* data, int qos,  mqtt::iaction_listener& cb);
 
 			/**
 			 * Function used to Publish messages on a specific topic to the IBM Watson IoT service
@@ -209,14 +189,11 @@ namespace Watson_IOTP {
 			 * @param message - message to be posted
 			 * @return mqtt::idelivery_token_ptr
 			 */
-			mqtt::idelivery_token_ptr publish(std::string topic, mqtt::message_ptr message);
+			mqtt::idelivery_token_ptr publishTopic(std::string topic, mqtt::message_ptr message);
+			mqtt::idelivery_token_ptr publishTopic(std::string topic, mqtt::message_ptr message,
+										void* userContext, mqtt::iaction_listener& cb);
 
-			/**
-			 * Function used to subscribe commands from the IBM Watson IoT service
-			 * @return bool
-			 * returns true if commands are subscribed successfully else false
-			 */
-			bool subscribeCommands();
+			bool subscribeTopic(const std::string& topic, int qos);
 
 			/**
 			 * Function used to subscribe handler for each topic from the IBM Watson IoT service
@@ -238,29 +215,25 @@ namespace Watson_IOTP {
 			 */
 			void disconnect() throw(mqtt::exception) ;
 
-			////////////////////////////////////////////////////////////////////////////
-
-			void setLifetime(int lifetime) {mLifetime = lifetime;}
-
-			std::string getTypeId() const { return mTypeId; }
-			std::string getDeviceId() const { return mDeviceId; }
-			Watson_IOTP::IOTP_DeviceInfo* getDeviceInfo() const { return mDeviceInfo; };
-			int getLifetime() const { return mLifetime; }
 			bool supportDeviceActions() const;
 			bool supportFirmwareActions() const;
-
-			bool manage();
-			bool unmanage();
-			bool update_device_location(Watson_IOTP::IOTP_DeviceLocation& deviceLocation);
-			///////////////////////////////////////////////////////////////////////////////
 
 			void IOTF_send_reply(iotp_reply_message_ptr reply);
 			static std::string jsonValueToString(Json::Value& jsonValue);
 
+		protected:
+			std::string send_message(const std::string& topic, const Json::Value& data, int qos = 1);
+			bool pushManageMessage(std::string topic, Json::Value data);
+			virtual void InitializeMqttClient() = 0;
+			mqtt::async_client* pasync_client;
+			iotp_response_handler_ptr mResponseHandler;
+			iotp_device_action_handler_ptr mActionHandler;
+			iotp_device_firmware_handler_ptr mFirmwareHandler;
+			Properties mProperties;
+
 		private:
 
 			void _send_reply();
-			std::string IOTF_send_message(const std::string& topic, const Json::Value& data, bool wait, int qos = 1);
 			iotf_callback_ptr set_callback();
 			void InitializeProperties(Properties& prop);
 			unsigned long mReqCounter;
@@ -270,20 +243,13 @@ namespace Watson_IOTP {
 			std::queue<iotp_reply_message_ptr> mReplyMsgs;
 			std::thread mReplyThread;
 			bool mExit;
-			mqtt::async_client* pasync_client;
-			mqtt::connect_options connectOptions;
-
+			int mKeepAliveInterval;
 			//////////////////////////////////////////////////////////////////////
 
-			std::string send_message(const std::string& topic, const Json::Value& data, int qos = 1);
 
-			std::string mTypeId;
-			std::string mDeviceId;
-			int mLifetime;
-			Watson_IOTP::IOTP_DeviceInfo* mDeviceInfo;
-			iotp_response_handler_ptr mResponseHandler;
-			iotp_device_action_handler_ptr mActionHandler;
-			iotp_device_firmware_handler_ptr mFirmwareHandler;
+//			int mLifetime;
+			//Watson_IOTP::IOTP_DeviceInfo* mDeviceInfo;
+
 			//int mReqCounter;
 			///////////////////////////////////////////////////////////////////////
 
