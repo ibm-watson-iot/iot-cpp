@@ -79,5 +79,5 @@ Features that are expected to be supported, shortly
 | [SSL/TLS support](https://console.ng.bluemix.net/docs/services/IoT/reference/security/index.html) | &#10008; | 
 | [Client side Certificate based authentication](https://console.ng.bluemix.net/docs/services/IoT/reference/security/RM_security.html) | &#10008; |
 | [Device Management Extension(DME)](https://console.ng.bluemix.net/docs/services/IoT/devices/device_mgmt/custom_actions.html) | &#10008; | 
-| [Auto reconnect](https://github.com/eclipse/paho.mqtt.java/issues/9) | &#10008; |
+| Auto reconnect | &#10008; |
 
