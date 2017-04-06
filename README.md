@@ -58,3 +58,26 @@ The documentation is divided into following sections:
 - The [Gateway Management section] (docs/cpp_cli_for_managedgateway.rst) contains information on how to connect the gateway as Managed Gateway to IBM Watson IoT Platform and manage the attached devices.
 
 ----
+
+Supported Features
+------------------
+
+| Feature   |      Supported?      | Description |
+|----------|:-------------:|:-------------|
+| [Device connectivity](https://console.ng.bluemix.net/docs/services/IoT/devices/libraries/mbedcpp.html) |  &#10004; | Connect your device(s) to Watson IoT Platform with ease using this library. [Click here](https://console.ng.bluemix.net/docs/services/IoT/devices/libraries/mbedcpp.html#library_use) for detailed information on how devices can publish events and handle commands.|
+| [Gateway connectivity](https://github.com/ibm-watson-iot/iot-cpp/blob/master/docs/cpp_cli_for_gateway.rst) |    &#10004;   | Connect your gateway(s) to Watson IoT Platform with ease using this library. [Click here](https://github.com/ibm-watson-iot/iot-cpp/blob/master/docs/cpp_cli_for_gateway.rst) for detailed information on how gateways can publish events and handle commands for itself and for the attached devices. |
+| [Device Management](https://github.com/ibm-watson-iot/iot-cpp/blob/master/docs/cpp_cli_for_manageddevice.rst) | &#10004; | Connects your device/gateway as managed device/gateway to Watson IoT Platform. [Click here](https://github.com/ibm-watson-iot/iot-cpp/blob/master/docs/cpp_cli_for_manageddevice.rst) for more information on how to perform device management operations like firmware update, reboot, location update and diagnostics update for a device.|
+| [Event/Command publish using MQTT](https://console.ng.bluemix.net/docs/services/IoT/reference/mqtt/index.html)| &#10004; | Enables device/gateway/application to publish messages using MQTT. Refer to [Device](https://console.ng.bluemix.net/docs/services/IoT/devices/libraries/mbedcpp.html#publishing_events) and  [Gateway](https://github.com/ibm-watson-iot/iot-cpp/blob/master/docs/cpp_cli_for_gateway.rst)  section for more information. |
+
+
+
+Features that are expected to be supported, shortly
+------------------
+
+| Feature   |      Supported as of now?      | 
+|----------|:-------------:|
+| [SSL/TLS support](https://console.ng.bluemix.net/docs/services/IoT/reference/security/index.html) | &#10008; | 
+| [Client side Certificate based authentication](https://console.ng.bluemix.net/docs/services/IoT/reference/security/RM_security.html) | &#10008; |
+| [Device Management Extension(DME)](https://console.ng.bluemix.net/docs/services/IoT/devices/device_mgmt/custom_actions.html) | &#10008; | 
+| Auto reconnect | &#10008; |
+
