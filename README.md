@@ -3,7 +3,7 @@ Device Management update in progress
 C++ Client Library - Introduction
 ============================================
 
-This C++ Client Library can be used to simplify interactions with the [IBM Watson IoT Platform] (https://internetofthings.ibmcloud.com). 
+This C++ Client Library can be used to simplify interactions with the [IBM Watson IoT Platform](https://internetofthings.ibmcloud.com). 
 
 Supported Features
 ------------------
