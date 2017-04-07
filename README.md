@@ -19,7 +19,7 @@ Supported Features
 | [Device Management Extension(DME)](https://console.ng.bluemix.net/docs/services/IoT/devices/device_mgmt/custom_actions.html) | &#10008; | Support to be added in the near future|
 | Auto reconnect | &#10008; |Support to be added in the near future|
 
----------------------------
+
 Installing the Dependencies
 ---------------------------
 Run the setup.sh file in the iot-cpp directory.
