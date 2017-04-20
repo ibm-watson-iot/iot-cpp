@@ -13,6 +13,7 @@
  * Contributors:
  *    Mike Tran - initial API and implementation and/or initial documentation
  *    Hari Prasada Reddy - Added functionalities/documentation to standardize with other client libraries
+ *    Lokesh Haralakatta - Updates to match with latest mqtt lib changes
  *******************************************************************************/
 
 #ifndef IOTF_CLIENT_H_
@@ -49,7 +50,7 @@ namespace Watson_IOTP {
 					IOTF_Callback(IOTP_Client* iotf_client);
 					~IOTF_Callback();
 					void connection_lost(const std::string& cause);
-					void message_arrived(const std::string& topic, mqtt::message_ptr msg);
+					void message_arrived(const std::string& topic, mqtt::const_message_ptr msg);
 					void delivery_complete(mqtt::idelivery_token_ptr tok);
 					void set_callback(CommandCallback* cb);
 

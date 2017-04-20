@@ -1,10 +1,19 @@
-/*
- * IOTP_GatewayClient.cpp
+/*******************************************************************************
+ * Copyright (c) 2016 IBM Corp.
  *
- *  Created on: 28-Jul-2016
- *      Author: amit
- */
-
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * and Eclipse Distribution License v1.0 which accompany this distribution.
+ *
+ * The Eclipse Public License is available at
+ *    http://www.eclipse.org/legal/epl-v10.html
+ * and the Eclipse Distribution License is available at
+ *   http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * Contributors:
+ *    Hari Prasada Reddy - Initial implementation
+ *    Lokesh Haralakatta - Updates to match with latest mqtt lib changes
+ *******************************************************************************/
 #include "IOTP_GatewayClient.h"
 #include <iostream>
 //#include "IOTF_ActionCallback.h"
@@ -45,7 +54,7 @@ void IOTP_GatewayClient::publishGatewayEvent(char *eventType, char *eventFormat,
 	pubmsg->set_qos(qos);
 	mqtt::idelivery_token_ptr delivery_tok = this->publishTopic(publishTopic, pubmsg);
 	delivery_tok->wait_for_completion(DEFAULT_TIMEOUT());
-	mqtt::message_ptr msgPtr = delivery_tok->get_message();
+	mqtt::const_message_ptr msgPtr = delivery_tok->get_message();
 }
 
 /**
@@ -81,7 +90,7 @@ void IOTP_GatewayClient::publishDeviceEvent(char* deviceType, char* deviceId, ch
 	pubmsg->set_qos(qos);
 	mqtt::idelivery_token_ptr delivery_tok = this->publishTopic(publishTopic, pubmsg);
 	delivery_tok->wait_for_completion(DEFAULT_TIMEOUT());
-	mqtt::message_ptr msgPtr = delivery_tok->get_message();
+	mqtt::const_message_ptr msgPtr = delivery_tok->get_message();
 }
 
 /**

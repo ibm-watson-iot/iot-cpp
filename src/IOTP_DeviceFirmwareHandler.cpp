@@ -12,6 +12,7 @@
  *
  * Contributors:
  *    Mike Tran - initial API and implementation and/or initial documentation
+ *    Lokesh Haralakatta - Updates to match with latest mqtt lib changes
  *******************************************************************************/
 
 #include <iostream>
@@ -271,7 +272,7 @@ namespace Watson_IOTP {
 		return replyPtr;
 	}
 
-	iotp_reply_message_ptr IOTP_DeviceFirmwareHandler::message_arrived(const std::string& topic, mqtt::message_ptr msg) {
+	iotp_reply_message_ptr IOTP_DeviceFirmwareHandler::message_arrived(const std::string& topic, mqtt::const_message_ptr msg) {
 		Json::Value jsonPayload;
 		Json::Reader reader;
 		iotp_reply_message_ptr replyPtr = nullptr;
@@ -395,6 +396,3 @@ namespace Watson_IOTP {
 
 
 }
-
-
-
