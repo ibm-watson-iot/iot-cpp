@@ -1,14 +1,31 @@
 cmake_minimum_required(VERSION 2.8)
 include_directories(mqtt)
+INCLUDE_DIRECTORIES(${OPENSSL_INCLUDE_DIR})
 SET(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(HEADER_FILES Clients.h Heap.h LinkedList.h Log.h Messages.h MQTTAsync.h MQTTClient.h MQTTClientPersistence.h MQTTPacket.h MQTTPacketOut.h MQTTPersistenceDefault.h MQTTPersistence.h MQTTProtocolClient.h MQTTProtocol.h MQTTProtocolOut.h SocketBuffer.h Socket.h SSLSocket.h StackTrace.h Thread.h Tree.h utf-8.h mqtt/async_client.h mqtt/callback.h mqtt/client.h mqtt/connect_options.h mqtt/delivery_token.h mqtt/exception.h mqtt/iaction_listener.h mqtt/iclient_persistence.h mqtt/ipersistable.h mqtt/message.h mqtt/token.h mqtt/topic.h)
+
+set(HEADER_FILES Clients.h Heap.h LinkedList.h Log.h Messages.h MQTTAsync.h
+                MQTTClient.h MQTTClientPersistence.h MQTTPacket.h MQTTPacketOut.h
+                MQTTPersistenceDefault.h MQTTPersistence.h MQTTProtocolClient.h
+                MQTTProtocol.h MQTTProtocolOut.h SocketBuffer.h Socket.h SSLSocket.h
+                StackTrace.h Thread.h Tree.h utf-8.h mqtt/async_client.h mqtt/callback.h
+                mqtt/client.h mqtt/connect_options.h mqtt/disconnect_options.h
+                mqtt/delivery_token.h mqtt/exception.h mqtt/iaction_listener.h
+                mqtt/iclient_persistence.h mqtt/ipersistable.h mqtt/message.h
+                mqtt/response_options.h mqtt/ssl_options.h mqtt/token.h mqtt/topic.h)
+
 add_library(async_client async_client.cpp ${HEADER_FILES})
 add_library(client client.cpp ${HEADER_FILES})
+add_library(connect_options connect_options.cpp ${HEADER_FILES})
+add_library(disconnect_options disconnect_options.cpp ${HEADER_FILES})
 add_library(iclient_persistence iclient_persistence.cpp ${HEADER_FILES})
 add_library(jsoncpp jsoncpp.cpp ${HEADER_FILES})
 add_library(message message.cpp ${HEADER_FILES})
+add_library(response_options response_options.cpp ${HEADER_FILES})
+add_library(ssl_options ssl_options.cpp ${HEADER_FILES})
 add_library(token token.cpp ${HEADER_FILES})
 add_library(topic topic.cpp ${HEADER_FILES})
+add_library(will_options will_options.cpp ${HEADER_FILES})
+
 add_library(MQTTAsync MQTTAsync.c ${HEADER_FILES})
 add_library(Clients Clients.c ${HEADER_FILES})
 add_library(Heap Heap.c ${HEADER_FILES})

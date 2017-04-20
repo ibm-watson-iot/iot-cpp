@@ -12,6 +12,7 @@
  *
  * Contributors:
  *    Mike Tran - initial API and implementation and/or initial documentation
+ *    Lokesh Haralakatta - Updates to match with latest mqtt lib changes
  *******************************************************************************/
 
 #ifndef IOTF_MESSAGEHANDLER_H_
@@ -48,7 +49,7 @@ public:
 	 * @param topic
 	 * @param msg
 	 */
-	virtual iotp_reply_message_ptr message_arrived(const std::string& topic, mqtt::message_ptr msg) =0;
+	virtual iotp_reply_message_ptr message_arrived(const std::string& topic, mqtt::const_message_ptr msg) =0;
 
 	friend IOTP_Client;
 

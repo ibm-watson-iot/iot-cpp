@@ -13,6 +13,7 @@
  * Contributors:
  *    Mike Tran - initial API and implementation and/or initial documentation
  *    Hari Prasada Reddy - Added functionalities/documentation to standardize with other client libraries
+ *    Lokesh Haralakatta - Updates to match with latest mqtt lib changes
  *******************************************************************************/
 
 #include <algorithm>
@@ -78,7 +79,7 @@ namespace Watson_IOTP {
 			std::cout << "\tcause: " << cause << std::endl;
 	}
 
-	void IOTP_Client::IOTF_Callback::message_arrived(const std::string& topic, mqtt::message_ptr msg) {
+	void IOTP_Client::IOTF_Callback::message_arrived(const std::string& topic, mqtt::const_message_ptr msg) {
 		Json::Value jsonPayload;
 		Json::Reader reader;
 		iotp_message_handler_ptr handler = nullptr;
@@ -289,11 +290,11 @@ namespace Watson_IOTP {
 		mqtt::itoken_ptr conntok;
 		conntok = pasync_client->connect(connectOptions, NULL, action);
 		conntok->wait_for_completion(DEFAULT_TIMEOUT());
-		
+
 		if (action.success()) {
 			callback_ptr = set_callback();
 		}
-		
+
 		if (conntok ->is_complete() == false)
 			return false;
 
@@ -540,4 +541,3 @@ namespace Watson_IOTP {
 	}
 
 }
-

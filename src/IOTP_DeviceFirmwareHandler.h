@@ -12,6 +12,7 @@
  *
  * Contributors:
  *    Mike Tran - initial API and implementation and/or initial documentation
+ *    Lokesh Haralakatta - Updates to match with latest mqtt lib changes
  *******************************************************************************/
 
 #ifndef DEVICEFIRMWAREHANDLER_H_
@@ -121,7 +122,7 @@ public:
 	IOTP_DeviceFirmwareHandler();
 	virtual ~IOTP_DeviceFirmwareHandler();
 	iotp_reply_message_ptr message_arrived(const std::string& topic, Json::Value& jsonPayload);
-	iotp_reply_message_ptr message_arrived(const std::string& topic, mqtt::message_ptr msg);
+	iotp_reply_message_ptr message_arrived(const std::string& topic, mqtt::const_message_ptr msg);
 
 	/**
 	 * The device is to validate that the firmware differs from the current installed firmware.

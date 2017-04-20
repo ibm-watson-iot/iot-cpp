@@ -1,9 +1,19 @@
-/*
- * IOTPDeviceAttributeHandler.h
+/*******************************************************************************
+ * Copyright (c) 2016 IBM Corp.
  *
- *  Created on: 21-Jul-2016
- *      Author: amit
- */
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * and Eclipse Distribution License v1.0 which accompany this distribution.
+ *
+ * The Eclipse Public License is available at
+ *    http://www.eclipse.org/legal/epl-v10.html
+ * and the Eclipse Distribution License is available at
+ *   http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * Contributors:
+ *    Hari Prasada Reddy - Initial implementation
+ *    Lokesh Haralakatta - Updates to match with latest mqtt lib changes
+ *******************************************************************************/
 
 #ifndef SRC_IOTPDEVICEATTRIBUTEHANDLER_H_
 #define SRC_IOTPDEVICEATTRIBUTEHANDLER_H_
@@ -41,7 +51,7 @@ public:
 
 	virtual ~IOTP_DeviceAttributeHandler() {}
 	iotp_reply_message_ptr message_arrived(const std::string& topic, Json::Value& jsonPayload);
-	iotp_reply_message_ptr message_arrived(const std::string& topic, mqtt::message_ptr msg);
+	iotp_reply_message_ptr message_arrived(const std::string& topic, mqtt::const_message_ptr msg);
 
 	/**
 	 * If this operation can be initiated immediately, set rc to 202.
