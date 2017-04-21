@@ -1,50 +1,37 @@
 cmake_minimum_required(VERSION 2.8)
-include_directories(mqtt)
-INCLUDE_DIRECTORIES(${OPENSSL_INCLUDE_DIR})
 SET(CMAKE_INCLUDE_CURRENT_DIR ON)
+INCLUDE_DIRECTORIES(${OPENSSL_INCLUDE_DIR})
 
-set(HEADER_FILES Clients.h Heap.h LinkedList.h Log.h Messages.h MQTTAsync.h
-                MQTTClient.h MQTTClientPersistence.h MQTTPacket.h MQTTPacketOut.h
-                MQTTPersistenceDefault.h MQTTPersistence.h MQTTProtocolClient.h
-                MQTTProtocol.h MQTTProtocolOut.h SocketBuffer.h Socket.h SSLSocket.h
-                StackTrace.h Thread.h Tree.h utf-8.h mqtt/async_client.h mqtt/callback.h
-                mqtt/client.h mqtt/connect_options.h mqtt/disconnect_options.h
-                mqtt/delivery_token.h mqtt/exception.h mqtt/iaction_listener.h
-                mqtt/iclient_persistence.h mqtt/ipersistable.h mqtt/message.h
-                mqtt/response_options.h mqtt/ssl_options.h mqtt/token.h mqtt/topic.h)
+add_library(${JSON_LIBRARY} jsoncpp.cpp)
 
-add_library(async_client async_client.cpp ${HEADER_FILES})
-add_library(client client.cpp ${HEADER_FILES})
-add_library(connect_options connect_options.cpp ${HEADER_FILES})
-add_library(disconnect_options disconnect_options.cpp ${HEADER_FILES})
-add_library(iclient_persistence iclient_persistence.cpp ${HEADER_FILES})
-add_library(jsoncpp jsoncpp.cpp ${HEADER_FILES})
-add_library(message message.cpp ${HEADER_FILES})
-add_library(response_options response_options.cpp ${HEADER_FILES})
-add_library(ssl_options ssl_options.cpp ${HEADER_FILES})
-add_library(token token.cpp ${HEADER_FILES})
-add_library(topic topic.cpp ${HEADER_FILES})
-add_library(will_options will_options.cpp ${HEADER_FILES})
+add_library(${MQTT_CPP_LIBRARY} async_client.cpp client.cpp connect_options.cpp disconnect_options.cpp
+                                iclient_persistence.cpp message.cpp response_options.cpp
+                                ssl_options.cpp token.cpp topic.cpp will_options.cpp
+                        )
 
-add_library(MQTTAsync MQTTAsync.c ${HEADER_FILES})
-add_library(Clients Clients.c ${HEADER_FILES})
-add_library(Heap Heap.c ${HEADER_FILES})
-add_library(LinkedList LinkedList.c ${HEADER_FILES})
-add_library(Log Log.c ${HEADER_FILES})
-add_library(Messages Messages.c ${HEADER_FILES})
-add_library(MQTTClient MQTTClient.c ${HEADER_FILES})
-add_library(MQTTPacket  MQTTPacket.c ${HEADER_FILES})
-add_library(MQTTPacketOut MQTTPacketOut.c  ${HEADER_FILES})
-add_library(MQTTPersistence MQTTPersistence.c  ${HEADER_FILES})
-add_library(MQTTPersistenceDefault MQTTPersistenceDefault.c ${HEADER_FILES})
-add_library(MQTTProtocolClient MQTTProtocolClient.c ${HEADER_FILES})
-add_library(MQTTProtocolOut MQTTProtocolOut.c ${HEADER_FILES})
-add_library(MQTTVersion MQTTVersion.c ${HEADER_FILES})
-add_library(SocketBuffer SocketBuffer.c ${HEADER_FILES})
-add_library(Socket Socket.c ${HEADER_FILES})
-add_library(SSLSocket SSLSocket.c ${HEADER_FILES})
-add_library(StackTrace StackTrace.c ${HEADER_FILES})
-add_library(Thread Thread.c ${HEADER_FILES})
-add_library(Tree Tree.c ${HEADER_FILES})
-add_library(utf-8 utf-8.c ${HEADER_FILES})
-TARGET_LINK_LIBRARIES (Log Messages)
+add_library(${MQTT_C_LIBRARY} MQTTAsync.c Clients.c Heap.c LinkedList.c Log.c Messages.c
+                              MQTTClient.c MQTTPacket.c MQTTPacketOut.c MQTTPersistence.c
+                              MQTTPersistenceDefault.c MQTTProtocolClient.c MQTTProtocolOut.c
+                              MQTTVersion.c SocketBuffer.c Socket.c SSLSocket.c StackTrace.c
+                              Thread.c Tree.c utf-8.c
+                        )
+
+ADD_LIBRARY ( ${LOG4CPP_LIBRARY_NAME} Appender.cpp AppenderSkeleton.cpp AppendersFactory.cpp
+              BufferingAppender.cpp FactoryParams.cpp LayoutsFactory.cpp LevelEvaluator.cpp
+              Localtime.cpp PassThroughLayout.cpp TriggeringEventEvaluatorFactory.cpp
+              LayoutAppender.cpp FileAppender.cpp DailyRollingFileAppender.cpp
+              RollingFileAppender.cpp FixedContextCategory.cpp IdsaAppender.cpp
+              OstreamAppender.cpp StringQueueAppender.cpp SyslogAppender.cpp
+              RemoteSyslogAppender.cpp SimpleLayout.cpp BasicLayout.cpp PatternLayout.cpp
+              Category.cpp CategoryStream.cpp HierarchyMaintainer.cpp Configurator.cpp
+              BasicConfigurator.cpp SimpleConfigurator.cpp PropertyConfigurator.cpp
+              PropertyConfiguratorImpl.cpp LoggingEvent.cpp Priority.cpp NDC.cpp Filter.cpp
+              TimeStamp.cpp StringUtil.cpp Properties.cpp Win32DebugAppender.cpp
+              NTEventLogAppender.cpp DllMain.cpp DummyThreads.cpp MSThreads.cpp
+              OmniThreads.cpp PThreads.cpp PortabilityImpl.cpp AbortAppender.cpp
+        )
+
+IF (WIN32)
+  TARGET_LINK_LIBRARIES (${LOG4CPP_LIBRARY_NAME} kernel32 user32 ws2_32 advapi32 )
+  SET_TARGET_PROPERTIES(${LOG4CPP_LIBRARY_NAME} PROPERTIES LINK_FLAGS /NODEFAULTLIB:msvcrt )
+ENDIF (WIN32)
