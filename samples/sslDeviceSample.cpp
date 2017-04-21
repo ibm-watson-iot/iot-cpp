@@ -18,6 +18,8 @@
 
  #include "IOTP_DeviceClient.h"
  #include "Properties.h"
+ #include <log4cpp/Category.hh>
+ #include <log4cpp/PropertyConfigurator.hh>
 
  using namespace std;
  using namespace Watson_IOTP;
@@ -25,34 +27,46 @@
  int main(int argc, char **argv) {
         Properties p;
         bool success = false;
+        int rc = -1;
+        string initFileName = "../samples/log4cpp.properties";
+	log4cpp::PropertyConfigurator::configure(initFileName);
+        log4cpp::Category& logger = log4cpp::Category::getRoot();
+        log4cpp::Category& console = log4cpp::Category::getInstance(std::string("clogger"));
 
+        logger.debug("Setting the properties to connect to WIoTP");
         p.setorgId("quickstart");
+        logger.debug("OrgId: "+ p.getorgId());
         //p.setdomain("messaging.internetofthings.ibmcloud.com");
         p.setdeviceType("elevator");
+        logger.debug("DeviceType: "+ p.getdeviceType());
         p.setdeviceId("android");
+        logger.debug("DeviceId: "+ p.getdeviceId());
         //p.setauthMethod("token");
         //p.setauthToken("password");
+        logger.warn("Needs token to connect...");
+        console.error("No credentials...");
 
         try {
                 IOTP_DeviceClient client(p);
-                cout<<"\nCreated IoTP Client with set properties...";
+                console.info("Created IoTP Client with set properties...");
 
                 success = client.connect();
                 if(success){
-                        cout<<"\nConnected client to Watson IoT platform...";
-                        cout<<"\nDisconnecting client from Watson IoT platform...";
+                        console.info("Connected client to Watson IoT platform...");
                         client.disconnect();
-                        cout<<"\nClient disconnected from Watson IoT platform...\n\n";
+                        console.info("Client disconnected from Watson IoT platform...");
                 }
                 else{
-                        cout<<"\nFailed connecting client to Watson IoT platform...\n\n";
+                        logger.warn("Failed connecting client to Watson IoT platform...");
                 }
 
-                return 0;
+                rc = 0;
         }
         catch (const mqtt::exception& exc) {
-		cerr << "\nError: " << exc.what()<<"\n\n";
-		return 1;
+		console.error("Error: ",exc.what());
+                rc = -1;
 	}
 
+        log4cpp::Category::shutdown();
+        return rc;
 }

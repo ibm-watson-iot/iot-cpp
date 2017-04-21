@@ -13,13 +13,10 @@ add_library(IOTP_ResponseHandler IOTP_ResponseHandler.cpp)
 
 set(SYSTEM_LIBS ${THREAD_LIBS_SYSTEM} ${OPENSSL_LIB} ${OPENSSLCRYPTO_LIB} ${LIBS_SYSTEM})
 
-set(COMMON_LIBS IOTP_Client IOTP_Device IOTP_ResponseHandler async_client client
-                connect_options disconnect_options iclient_persistence jsoncpp
-                message response_options ssl_options token topic will_options
-                Clients  LinkedList  Messages   MQTTClient  MQTTPacketOut
-                MQTTPersistenceDefault  MQTTProtocolOut  SocketBuffer  SSLSocket
-                Thread  utf-8 Heap     Log  MQTTAsync  MQTTPacket  MQTTPersistence
-                MQTTProtocolClient MQTTVersion Socket  StackTrace  Tree)
+set(COMMON_LIBS IOTP_Client IOTP_Device IOTP_DeviceActionHandler IOTP_DeviceFirmwareHandler
+                IOTP_DeviceAttributeHandler IOTP_ResponseHandler ${JSON_LIBRARY} ${MQTT_CPP_LIBRARY}
+                ${MQTT_C_LIBRARY} ${LOG4CPP_LIBRARY_NAME}
+        )
 
 TARGET_LINK_LIBRARIES (IOTP_DeviceClient ${COMMON_LIBS} ${SYSTEM_LIBS})
 TARGET_LINK_LIBRARIES (IOTP_GatewayClient ${COMMON_LIBS} ${SYSTEM_LIBS})

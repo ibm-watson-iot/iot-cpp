@@ -7,16 +7,18 @@ mv lib lib_bk
 mkdir tmp
 mkdir lib
 cd tmp
-echo "downloading paho mqtt cpp ...."
+echo "Downloading Paho mqtt cpp ...."
 curl -LO https://github.com/eclipse/paho.mqtt.cpp/archive/master.zip
 unzip master.zip
-echo "downloading paho mqtt c..."
+echo "Downloading Paho mqtt c..."
 curl -LO https://github.com/eclipse/paho.mqtt.c/archive/v1.1.0.tar.gz
 tar -xvf v1.1.0.tar.gz
-echo "downloading jsoncpp...."
+echo "Downloading jsoncpp...."
 curl -LO https://github.com/open-source-parsers/jsoncpp/archive/0.10.6.tar.gz
 tar -xvf 0.10.6.tar.gz
-echo "copying the necessary files to lib"
+echo "Downloading log4cpp...."
+git clone https://git.code.sf.net/p/log4cpp/codegit log4cpp-codegit
+echo "Copying the necessary files to lib"
 cp paho.mqtt.cpp-master/src/*.cpp ../lib/
 cp -r paho.mqtt.cpp-master/src/mqtt ../lib/
 cp paho.mqtt.c-1.1.0/src/*.c ../lib/
@@ -25,10 +27,14 @@ cd jsoncpp-0.10.6
 python amalgamate.py
 cp dist/jsoncpp.cpp ../../lib/
 cp -R dist/json ../../lib/
+cd ../log4cpp-codegit
+cp -r include/log4cpp ../../lib/
+cp include/config.h.in ../../lib/log4cpp/config.h
+cp src/* ../../lib/
 cd ../../
 cp ./lib_bk/CMakeLists.txt ./lib/
 cp ./lib_bk/VersionInfo.h ./lib/
-echo "removing the temporary files"
+echo "Removing the temporary files"
 rm -rf ./tmp/
 rm -rf ./lib_bk/
-echo "finished setup"
+echo "Finished setup"
