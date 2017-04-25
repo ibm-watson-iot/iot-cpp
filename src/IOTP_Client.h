@@ -14,6 +14,8 @@
  *    Mike Tran - initial API and implementation and/or initial documentation
  *    Hari Prasada Reddy - Added functionalities/documentation to standardize with other client libraries
  *    Lokesh Haralakatta - Updates to match with latest mqtt lib changes
+ *    Lokesh Haralakatta - Added method to parse WIoTP configuration from file.
+ *    Lokesh Haralakatta - Added log4cpp integration code for logging.
  *******************************************************************************/
 
 #ifndef IOTF_CLIENT_H_
@@ -24,6 +26,8 @@
 #include "mqtt/async_client.h"
 #include "mqtt/exception.h"
 #include "json/json.h"
+#include "log4cpp/Category.hh"
+#include "log4cpp/PropertyConfigurator.hh"
 #include "IOTP_MessageHandler.h"
 #include "CommandCallback.h"
 #include "Properties.h"
@@ -112,31 +116,43 @@ namespace Watson_IOTP {
 			/** Pointer type for this object */
 			typedef std::shared_ptr<IOTP_Client> ptr_t;
 
-			/**
-			 * Constructor of an IOTF_Client.  The parameters are the same as
-			 * the constructor of the base class, mqtt::callback.
-			 */
-			//IOTP_Client(const std::string& uri, const std::string& clientId);
-			IOTP_Client(Properties& prop);
+			/* Logging objects */
+			log4cpp::Category& logger = log4cpp::Category::getRoot();
+			log4cpp::Category& console = log4cpp::Category::getInstance(std::string("clogger"));
 
 			/**
-			 * Constructor of an IOTF_Client.  The parameters are the same as
-			 * the constructor of the base class, mqtt::callback.
+			 * Constructor of an IOTP_Client.  The parameters are:
+			 * Properties Instance with required WIoTP configurations
+			 * log4cpp properties file path. Default is log4cpp.properties.
 			 */
-			//IOTP_Client(const std::string& uri, const std::string& clientId);
-			//IOTP_Client(Properties& prop, Watson_IOTP::IOTP_DeviceInfo* deviceInfo);
-			IOTP_Client(Properties& prop, iotf_device_data_ptr& deviceData);
+			IOTP_Client(Properties& prop,std::string logPropertiesFile="log4cpp.properties");
 
 			/**
-			 * Constructor of an IOTF_Client.
-			 * Required arguments are organization ID, device type and device ID.
+			 * Constructor of an IOTP_Client.  The parameters are:
+			 * Properties Instance with required WIOTP configurations
+			 * Device device
+			 * log4cpp properties file path. Default is log4cpp.properties.
+			 */
+			IOTP_Client(Properties& prop, iotf_device_data_ptr& deviceData,
+						std::string logPropertiesFile="log4cpp.properties");
+
+			/**
+			 * Constructor of an IOTP_Client. The parameters are:
+			 * Properties Instance with required WIoTP configurations
+			 * Device Action handler
+			 * Firmware handler
+			 * log4cpp properties file path. Default is log4cpp.properties.
 			 */
 			//IOTP_Client(Properties& prop, Watson_IOTP::IOTP_DeviceInfo* deviceInfo,
 			IOTP_Client(Properties& prop, iotp_device_action_handler_ptr& actionHandler,
-					iotp_device_firmware_handler_ptr& firmwareHandler);
+					iotp_device_firmware_handler_ptr& firmwareHandler,
+					std::string logPropertiesFile="log4cpp.properties");
+
+			/**
+			* Constructor of an IOTP_Client using WIoTP Properties file. **/
+			IOTP_Client(const std::string& filePath, std::string logPropertiesFile="log4cpp.properties");
 
 			virtual ~IOTP_Client();
-
 
 			/**
 			 * Function sets the "keep Alive" interval.
@@ -225,7 +241,7 @@ namespace Watson_IOTP {
 		protected:
 			std::string send_message(const std::string& topic, const Json::Value& data, int qos = 1);
 			bool pushManageMessage(std::string topic, Json::Value data);
-			virtual void InitializeMqttClient() = 0;
+			virtual bool InitializeMqttClient() = 0;
 			mqtt::async_client* pasync_client;
 			iotp_response_handler_ptr mResponseHandler;
 			iotp_device_action_handler_ptr mActionHandler;
@@ -237,6 +253,7 @@ namespace Watson_IOTP {
 			void _send_reply();
 			iotf_callback_ptr set_callback();
 			void InitializeProperties(Properties& prop);
+			bool InitializePropertiesFromFile(const std::string& filePath,Properties& prop);
 			unsigned long mReqCounter;
 			iotf_callback_ptr callback_ptr;
 			mutable std::mutex mLock;

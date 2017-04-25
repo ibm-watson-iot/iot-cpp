@@ -13,7 +13,9 @@
  * Contributors:
  *    Mike Tran - initial API and implementation and/or initial documentation
  *    Hari Prasada Reddy - Added functionalities/documentation to standardize with other client libraries
- *    Lokesh Haralakatta - Updates to match with latest mqtt lib changes
+ *    Lokesh Haralakatta - Updates to match with latest mqtt lib changes.
+ *    Lokesh Haralakatta - Added method to parse WIoTP configuration from file.
+ *    Lokesh Haralakatta - Added log4cpp integration code for logging.
  *******************************************************************************/
 
 #include <algorithm>
@@ -23,6 +25,7 @@
 #include <cstring>
 #include <ctime>
 #include <iostream>
+#include <fstream>
 #include <iterator>
 #include <map>
 #include <memory>
@@ -212,6 +215,9 @@ namespace Watson_IOTP {
 
 	//IOTP_Client Initializing parameters
 	void IOTP_Client::InitializeProperties(Properties& prop) {
+		std::string methodName = __func__;
+		logger.debug(methodName+" Entry: ");
+
 		mProperties = prop;
 		mExit = false;
 		mReqCounter = 0;
@@ -220,26 +226,165 @@ namespace Watson_IOTP {
 		mResponseHandler = std::make_shared<IOTP_ResponseHandler> ();
 		mReplyThread = std::thread(&IOTP_Client::_send_reply, this);
 		mKeepAliveInterval = 60;
+
+		logger.debug(methodName+" Exit: ");
+	}
+
+	/* Method to read properties from file and Initialize to Properties Instance.
+	* Parameters are:
+	* WIoTP Properties file path.
+	* Properties instance to get initialized.
+	*/
+	bool IOTP_Client::InitializePropertiesFromFile(const std::string& filePath,Properties& prop) {
+		std::string methodName = __func__;
+		logger.debug(methodName+" Entry: ");
+		bool rc = true;
+		Json::Reader reader;
+		Json::Value root;
+		std::filebuf fb;
+		if (fb.open(filePath, std::ios::in)) {
+			std::istream is(&fb);
+			if (!reader.parse(is, root)) {
+				logger.error("Failed to parse configurations from input file: " +filePath);
+				fb.close();
+				rc = false;
+			}
+			fb.close();
+
+			std::string org = root.get("Organization-ID", "").asString();
+			if (org.size() == 0) {
+				logger.error("Failed to parse Organization-ID from given configuration.");
+				rc = false;
+			}
+			else
+				prop.setorgId(org);
+
+			std::string domain = root.get("domain", "").asString();
+			if (domain.size() != 0)
+				prop.setdomain(domain);
+
+			std::string deviceType = root.get("Device-Type", "").asString();
+			if (deviceType.size() == 0) {
+				logger.error("Failed to parse Device-Type from given configuration.");
+				rc = false;
+			}
+			else
+				prop.setdeviceType(deviceType);
+
+			std::string deviceId = root.get("Device-ID", "").asString();
+			if (deviceId.size() == 0) {
+				logger.error("Failed to parse Device-ID from given configuration.");
+				rc = false;
+			}
+			else
+				prop.setdeviceId(deviceId);
+
+			if(org.compare("quickstart") != 0) {
+				std::string username = root.get("Authentication-Method", "").asString();
+
+				if (username.size() == 0) {
+					logger.error("Failed to parse username from given configuration.");
+					rc = false;
+				}
+				else
+					prop.setauthMethod(username);
+
+				std::string password = root.get("Authentication-Token", "").asString();
+				if (password.size() == 0) {
+					logger.error("Failed to parse password from given configuration.");
+					rc = false;
+				}
+				else
+					prop.setauthToken(password);
+			}
+		}
+		else {
+			console.error("Failed to open input file: " +filePath);
+			rc = false;
+		}
+
+		logger.debug(methodName+" Exit: ");
+		return rc;
+	}
+
+	// IOTP_Client constructor using a properties file
+	IOTP_Client::IOTP_Client(const std::string& filePath, std::string logPropertiesFile) {
+		log4cpp::PropertyConfigurator::configure(logPropertiesFile);
+		std::string methodName = __PRETTY_FUNCTION__;
+		logger.debug(methodName+" Entry: ");
+		if(InitializePropertiesFromFile(filePath,mProperties))
+		{
+		    mExit = false;
+		    mReqCounter = 0;
+		    mActionHandler = nullptr;
+		    mFirmwareHandler = nullptr;
+		    mResponseHandler = std::make_shared<IOTP_ResponseHandler> ();
+		    mReplyThread = std::thread(&IOTP_Client::_send_reply, this);
+		    mKeepAliveInterval = 60;
+		    //Add debug stmts for reference
+		    logger.debug("Organization: " + mProperties.getorgId());
+		    logger.debug("Domain: " + mProperties.getdomain());
+		    logger.debug("DeviceType: " + mProperties.getdeviceType());
+		    logger.debug("Device Id: " + mProperties.getdeviceId());
+		    logger.debug("Auth Method: " + mProperties.getauthMethod());
+		    logger.debug("Auth Token: " + mProperties.getauthToken());
+	        }
+		else {
+		    console.error("Failed parsing configuration values from file: "+filePath);
+		}
+		logger.debug(methodName+" Exit: ");
 	}
 
 	// IOTF_Client constructors and methods
-	IOTP_Client::IOTP_Client(Properties& prop) {
+	IOTP_Client::IOTP_Client(Properties& prop, std::string logPropertiesFile) {
+		log4cpp::PropertyConfigurator::configure(logPropertiesFile);
+		std::string methodName = __PRETTY_FUNCTION__;
+		logger.debug(methodName+" Entry: ");
 		InitializeProperties(prop);
+		//Add debug stmts for reference
+		logger.debug("Organization: " + mProperties.getorgId());
+		logger.debug("Domain: " + mProperties.getdomain());
+		logger.debug("DeviceType: " + mProperties.getdeviceType());
+		logger.debug("Device Id: " + mProperties.getdeviceId());
+		logger.debug("Auth Method: " + mProperties.getauthMethod());
+		logger.debug("Auth Token: " + mProperties.getauthToken());
+		logger.debug(methodName+" Exit: ");
 	}
 
 	// IOTF_Client constructors and methods
 	//IOTP_Client::IOTP_Client(Properties& prop, Watson_IOTP::IOTP_DeviceInfo* deviceInfo,
 	IOTP_Client::IOTP_Client(Properties& prop, iotp_device_action_handler_ptr& actionHandler,
-		iotp_device_firmware_handler_ptr& firmwareHandler) {
+		iotp_device_firmware_handler_ptr& firmwareHandler, std::string logPropertiesFile) {
+		log4cpp::PropertyConfigurator::configure(logPropertiesFile);
+		std::string methodName = __PRETTY_FUNCTION__;
+		logger.debug(methodName+" Entry: ");
 		InitializeProperties(prop);
 		mActionHandler = actionHandler;
 		mFirmwareHandler = firmwareHandler;
+		//Add debug stmts for reference
+		logger.debug("Organization: " + mProperties.getorgId());
+		logger.debug("Domain: " + mProperties.getdomain());
+		logger.debug("DeviceType: " + mProperties.getdeviceType());
+		logger.debug("Device Id: " + mProperties.getdeviceId());
+		logger.debug("Auth Method: " + mProperties.getauthMethod());
+		logger.debug("Auth Token: " + mProperties.getauthToken());
+
+		logger.debug(methodName+" Exit: ");
 	}
 
 	IOTP_Client::~IOTP_Client() {
-		mExit = true;
-		mReplyThread.join();
-		delete pasync_client;
+		std::string methodName = __func__;
+		logger.debug(methodName+" Entry: ");
+		try {
+			mExit = true;
+			mReplyThread.join();
+			delete pasync_client;
+		}
+		catch(const std::exception& e ){
+			logger.debug("Exception caught while releasing IOTP_Client Resources...");
+			logger.debug(e.what());
+		}
+		logger.debug(methodName+" Exit: ");
 	}
 
 
@@ -263,6 +408,9 @@ namespace Watson_IOTP {
 	 */
 	bool IOTP_Client::connect()
 		throw(mqtt::exception, mqtt::security_exception) {
+		std::string methodName = __PRETTY_FUNCTION__;
+		logger.debug(methodName+" Entry: ");
+		bool rc = true;
 		IOTF_ActionCallback action;
 		mqtt::connect_options connectOptions;
 		connectOptions.set_clean_session(true);
@@ -273,8 +421,8 @@ namespace Watson_IOTP {
 		if(mProperties.getorgId().compare("quickstart") != 0) {
 			usrName = mProperties.getauthMethod();
 			if(usrName.compare("token") != 0) {
-				std::cout<<"wrong auth-Method supplied.Platform supports auth-method:\"token\""<<std::endl;
-				return false;
+				console.error("Wrong auth-Method supplied.Platform supports auth-method:\"token\"");
+				rc = false;
 			}
 			else
 			{
@@ -288,17 +436,22 @@ namespace Watson_IOTP {
 
 
 		mqtt::itoken_ptr conntok;
+		logger.debug("Calling pasync_client->connect()...");
 		conntok = pasync_client->connect(connectOptions, NULL, action);
 		conntok->wait_for_completion(DEFAULT_TIMEOUT());
 
 		if (action.success()) {
+			logger.debug("Setting the callback...");
 			callback_ptr = set_callback();
 		}
 
-		if (conntok ->is_complete() == false)
-			return false;
+		if (conntok->is_complete() == false){
+			logger.debug("conntok->is_complete() is false...");
+			rc = false;
+		}
 
-		return true;
+		logger.debug(methodName+" Exit: ");
+		return rc;
 	}
 
 	/**
@@ -311,12 +464,15 @@ namespace Watson_IOTP {
 	 */
 	bool IOTP_Client::connect(mqtt::iaction_listener& cb)
 					throw(mqtt::exception, mqtt::security_exception) {
+		std::string methodName = __PRETTY_FUNCTION__;
+		logger.debug(methodName+" Entry: ");
+		bool rc = true;
 		IOTF_ActionCallback action;
 		mqtt::connect_options connectOptions;
 		std::string usrName = mProperties.getauthMethod();
 		if(usrName.compare("token") != 0) {
-			std::cout<<"wrong auth-Method supplied.Platform supports auth-method:\"token\""<<std::endl;
-			return false;
+			console.error("Wrong auth-Method supplied.Platform supports auth-method:\"token\"");
+			rc = false;
 		}
 		else
 		{
@@ -329,20 +485,26 @@ namespace Watson_IOTP {
 
 		std::string passwd = mProperties.getauthToken();
 		connectOptions.set_password(passwd);
+		logger.debug("Calling pasync_client->connect()....");
 		mqtt::itoken_ptr conntok = pasync_client->connect(connectOptions, NULL, action);
 		conntok->wait_for_completion(DEFAULT_TIMEOUT());
 
 		if (action.success() == true) {
+			logger.debug("Setting callback for connection success....");
 			cb.on_success(*conntok);
 			callback_ptr = set_callback();
 		} else {
+			logger.debug("Setting callback for connection failure....");
 			cb.on_failure(*conntok);
 		}
 
-		if (conntok->is_complete() == false)
-			return false;
+		if (conntok->is_complete() == false){
+			logger.debug("conntok->is_complete() is false....");
+			rc = false;
+		}
 
-		return true;
+		logger.debug(methodName+" Exit: ");
+		return rc;
 	}
 
 
@@ -369,29 +531,45 @@ namespace Watson_IOTP {
 	 * @return mqtt::idelivery_token_ptr
 	 */
 	mqtt::idelivery_token_ptr IOTP_Client::publishTopic(std::string topic, mqtt::message_ptr message) {
+		std::string methodName = __PRETTY_FUNCTION__;
+		logger.debug(methodName+" Entry: ");
+		logger.debug("Calling pasync_client->publish()...");
 		mqtt::idelivery_token_ptr delivery_tok = pasync_client->publish(topic, message);
+		logger.debug(methodName+" Exit: ");
 		return delivery_tok;
 	}
 
 	mqtt::idelivery_token_ptr IOTP_Client::publishTopic(std::string topic, mqtt::message_ptr message,
-											void* userContext, mqtt::iaction_listener& cb) {
+					void* userContext, mqtt::iaction_listener& cb) {
+		std::string methodName = __PRETTY_FUNCTION__;
+		logger.debug(methodName+" Entry: ");
+		logger.debug("Calling pasync_client->publish(cb)...");
 		mqtt::idelivery_token_ptr delivery_tok = pasync_client->publish(topic, message, userContext, cb);
+		logger.debug(methodName+" Exit: ");
 		return delivery_tok;
 	}
 
 	bool IOTP_Client::subscribeTopic(const std::string& topic, int qos) {
-		if (callback_ptr->check_subscription(topic) == false) {
+		std::string methodName = __PRETTY_FUNCTION__;
+		logger.debug(methodName+" Entry: ");
+		bool rc = false;
+		if ((rc = callback_ptr->check_subscription(topic)) == false) {
+			logger.debug("Calling pasync_client->subscribe()....");
 			mqtt::itoken_ptr tok = pasync_client->subscribe(topic, qos);
 			tok->wait_for_completion(DEFAULT_TIMEOUT());
 			if (tok->is_complete()) {
+				logger.debug("Adding the subscription for the topic: "+topic);
 				callback_ptr->add_subscription(topic);
-				return true;
-				}
-				} else {
-					return true;
+				rc = true;
 			}
+		}
+		else {
+			logger.debug("Already subscribed for the topic: "+topic);
+			rc = true;
+		}
 		//If we come here, something is wrong.
-		return false;
+		logger.debug(methodName+" Exit: ");
+		return rc;
 	}
 
 
@@ -439,8 +617,12 @@ namespace Watson_IOTP {
 	 * @return void
 	 */
 	void IOTP_Client::disconnect() throw(mqtt::exception) {
+		std::string methodName = __PRETTY_FUNCTION__;
+		logger.debug(methodName+" Entry: ");
+		logger.debug("Calling pasync_client->disconnect()...");
 		mqtt::itoken_ptr conntok = pasync_client->disconnect();
 		conntok->wait_for_completion();
+		logger.debug(methodName+" Exit: ");
 	}
 
 	/**

@@ -13,6 +13,8 @@
  * Contributors:
  *    Hari Prasada Reddy - Initial implementation
  *    Lokesh Haralakatta - Updates to match with latest mqtt lib changes
+ *    Lokesh Haralakatta - Added members to hold serverURI and clientID.
+ *    Lokesh Haralakatta - Added logging feature using log4cpp.
  *******************************************************************************/
 
 #include "IOTP_DeviceClient.h"
@@ -21,26 +23,39 @@
 
 namespace Watson_IOTP {
 
-// IOTP_DeviceClient constructors and methods
-IOTP_DeviceClient::IOTP_DeviceClient(Properties& prop) :mDevAttributeHandler (nullptr), mLifetime(3600),
-		IOTP_Client(prop){
-	InitializeMqttClient();
+// IOTP_DeviceClient constructor with properties instance
+IOTP_DeviceClient::IOTP_DeviceClient(Properties& prop,std::string logPropertiesFile) :
+	mDevAttributeHandler (nullptr), mDeviceData(nullptr),mLifetime(3600),
+	mServerURI(""),mClientID(""),IOTP_Client(prop,logPropertiesFile)
+{
+
 }
 
-// IOTP_DeviceClient constructors and methods
-IOTP_DeviceClient::IOTP_DeviceClient(Properties& prop, iotf_device_data_ptr& deviceData) :
-		mDevAttributeHandler (nullptr), mDeviceData(deviceData), mLifetime(3600), IOTP_Client(prop)  {
-	InitializeMqttClient();
+// IOTP_DeviceClient constructor with properties instance and deviceData
+IOTP_DeviceClient::IOTP_DeviceClient(Properties& prop, iotf_device_data_ptr& deviceData,std::string logPropertiesFile) :
+	mDevAttributeHandler (nullptr), mDeviceData(deviceData), mLifetime(3600),
+	mServerURI(""),mClientID(""),IOTP_Client(prop,logPropertiesFile)
+{
+
 }
 
-// IOTP_DeviceClient constructors and methods
+// IOTP_DeviceClient constructor with properties and handlers
 IOTP_DeviceClient::IOTP_DeviceClient(Properties& prop, iotf_device_data_ptr& deviceData,
 		iotp_device_action_handler_ptr& actionHandler,
 		iotp_device_firmware_handler_ptr& firmwareHandler,
-		iotp_device_attribute_handler_ptr& devAttributeHandler) :IOTP_Client(prop,
-				actionHandler, firmwareHandler), mDeviceData(deviceData),
-mDevAttributeHandler(devAttributeHandler){
-	InitializeMqttClient();
+		iotp_device_attribute_handler_ptr& devAttributeHandler,std::string logPropertiesFile) :
+		IOTP_Client(prop,actionHandler, firmwareHandler,logPropertiesFile), mDeviceData(deviceData),
+		mLifetime(3600), mServerURI(""),mClientID(""),mDevAttributeHandler(devAttributeHandler)
+{
+
+}
+
+// IOTP_DeviceClient constructor with properties file and log4cpp file
+IOTP_DeviceClient::IOTP_DeviceClient(const std::string& filePath, std::string logPropertiesFile):
+	mDevAttributeHandler (nullptr), mDeviceData(nullptr),mLifetime(3600),
+	mServerURI(""),mClientID(""),IOTP_Client(filePath,logPropertiesFile)
+{
+
 }
 
 /**
@@ -52,11 +67,22 @@ mDevAttributeHandler(devAttributeHandler){
  */
 bool IOTP_DeviceClient::connect()
 	throw(mqtt::exception, mqtt::security_exception) {
-	bool ret = IOTP_Client::connect();
-	if(mProperties.getorgId().compare("quickstart") != 0)
-		subscribeCommands();
+	std::string methodName = __PRETTY_FUNCTION__;
+	logger.debug(methodName+" Entry: ");
+	bool rc = false;
+	if(InitializeMqttClient()){
+		console.info("Device Client connecting to " + mServerURI +
+			" with client-id: " + mClientID);
+		rc = IOTP_Client::connect();
+		if(mProperties.getorgId().compare("quickstart") != 0)
+			subscribeCommands();
+	}
+	else {
+		console.error("Initializing MQTT Client Failed...");
+	}
 
-	return ret;
+	logger.debug(methodName+" Exit: ");
+	return rc;
 }
 /**
 * Function used to Publish events from the device to the IBM Watson IoT service
@@ -68,13 +94,18 @@ bool IOTP_DeviceClient::connect()
 * @return void
 */
 void IOTP_DeviceClient::publishEvent(char *eventType, char *eventFormat, const char* data, int qos) {
+	std::string methodName = __PRETTY_FUNCTION__;
+	logger.debug(methodName+" Entry: ");
 	std::string publishTopic= "iot-2/evt/"+std::string(eventType)+"/fmt/"+std::string(eventFormat);
 	std::string payload = data;
+	logger.debug("publishTopic: " + publishTopic);
+	logger.debug("payload: " + payload);
 	mqtt::message_ptr pubmsg = std::make_shared < mqtt::message > (data);
 	pubmsg->set_qos(qos);
 	mqtt::idelivery_token_ptr delivery_tok = this->publishTopic(publishTopic, pubmsg);
 	//delivery_tok->wait_for_completion(DEFAULT_TIMEOUT());
 	mqtt::const_message_ptr msgPtr = delivery_tok->get_message();
+	logger.debug(methodName+" Exit: ");
 }
 
 /**
@@ -86,12 +117,19 @@ void IOTP_DeviceClient::publishEvent(char *eventType, char *eventFormat, const c
 * @param iaction_listener& cb - call back function for action listner
 * @return void
 */
-void IOTP_DeviceClient::publishEvent(char *eventType, char *eventFormat, const char* data, int qos,  mqtt::iaction_listener& cb) {
-		std::string publishTopic= "iot-2/evt/"+std::string(eventType)+"/fmt/"+std::string(eventFormat);
-		std::string payload = data;
-		mqtt::message_ptr pubmsg = std::make_shared < mqtt::message > (data);
-		pubmsg->set_qos(qos);
-		mqtt::idelivery_token_ptr delivery_tok = this->publishTopic(publishTopic, pubmsg, NULL, cb);
+void IOTP_DeviceClient::publishEvent(char *eventType, char *eventFormat, const char* data, int qos,
+	  				mqtt::iaction_listener& cb)
+{
+	std::string methodName = __PRETTY_FUNCTION__;
+	logger.debug(methodName+" Entry: ");
+	std::string publishTopic= "iot-2/evt/"+std::string(eventType)+"/fmt/"+std::string(eventFormat);
+	std::string payload = data;
+	logger.debug("publishTopic: " + publishTopic);
+	logger.debug("payload: " + payload);
+	mqtt::message_ptr pubmsg = std::make_shared < mqtt::message > (data);
+	pubmsg->set_qos(qos);
+	mqtt::idelivery_token_ptr delivery_tok = this->publishTopic(publishTopic, pubmsg, NULL, cb);
+	logger.debug(methodName+" Exit: ");
 }
 
 /**
@@ -100,9 +138,13 @@ void IOTP_DeviceClient::publishEvent(char *eventType, char *eventFormat, const c
  * returns true if commands are subscribed successfully else false
  */
 bool IOTP_DeviceClient::subscribeCommands() {
+	std::string methodName = __func__;
+	logger.debug(methodName+" Entry: ");
 	std::string topic = "iot-2/cmd/+/fmt/+";
+	logger.debug("subscribeTopic: " + topic);
 	int qos = 1;
 	bool ret = this->subscribeTopic(topic, qos);
+	logger.debug(methodName+" Exit: ");
 	return ret;
 }
 
@@ -203,10 +245,45 @@ bool IOTP_DeviceClient::clearLogs() {
 	return pushManageMessage(DEVICE_CLEAR_DIAG_LOG_TOPIC, jsonPayload);
 }
 
-void IOTP_DeviceClient::InitializeMqttClient() {
-	std::string serverURI = "tcp://" + mProperties.getorgId() + ".messaging."+mProperties.getdomain()+":1883";
-	std::string clientId = "d:" + mProperties.getorgId() + ":" + mProperties.getdeviceType() + ":" + mProperties.getdeviceId();
-	pasync_client = new mqtt::async_client(serverURI, clientId);
+bool IOTP_DeviceClient::InitializeMqttClient() {
+	std::string methodName = __func__;
+	logger.debug(methodName+" Entry: ");
+	bool rc = true;
+	if(mProperties.getorgId().size() == 0){
+		console.error(methodName+ ": Organization-ID can not be empty / null");
+		rc = false;
+	}
+	else if(mProperties.getdomain().size() == 0){
+		console.error(methodName+ ": domain can not be empty / null");
+		rc = false;
+	}
+	else if(mProperties.getdeviceType().size() == 0){
+		console.error(methodName+ ": Device-Type can not be empty / null");
+		rc = false;
+	}
+	else if(mProperties.getdeviceId().size() == 0){
+		console.error(methodName+ ": Device-Id can not be empty / null");
+		rc = false;
+	}
+	else{
+		std::string serverURI = "tcp://" + mProperties.getorgId() + ".messaging." +
+						mProperties.getdomain()+":1883";
+
+		std::string clientId = "d:" + mProperties.getorgId() + ":" + mProperties.getdeviceType() +
+						":" + mProperties.getdeviceId();
+
+		mServerURI = serverURI;
+		mClientID = clientId;
+		logger.debug("serverURI: " + serverURI);
+		logger.debug("clientId: " + clientId);
+
+		pasync_client = new mqtt::async_client(serverURI, clientId);
+		logger.debug("Underlying async_client created...");
+	}
+
+	logger.debug(methodName+" Exit: ");
+
+	return rc;
 }
 
 } /* namespace Watson_IOTP */

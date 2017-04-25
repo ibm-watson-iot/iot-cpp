@@ -138,12 +138,15 @@ bool IOTP_GatewayClient::subscribeDeviceCommands(char* deviceType, char* deviceI
 		return ret;
 }
 
-void IOTP_GatewayClient::InitializeMqttClient() {
+bool IOTP_GatewayClient::InitializeMqttClient() {
+	bool rc = false;
 	std::string serverURI = "tcp://" + mProperties.getorgId() + ".messaging."
 			+ mProperties.getdomain() + ":1883";
 	std::string clientId = "g:" + mProperties.getorgId() + ":" + mProperties.getdeviceType()
 			+ ":" + mProperties.getdeviceId();
 	pasync_client = new mqtt::async_client(serverURI, clientId);
+
+	return rc;
 }
 
 } /* namespace Watson_IOTP */
