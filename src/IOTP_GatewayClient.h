@@ -96,7 +96,7 @@ public:
 	~IOTP_GatewayClient(){}
 
 private:
-	void InitializeMqttClient();
+	bool InitializeMqttClient();
 };
 
 

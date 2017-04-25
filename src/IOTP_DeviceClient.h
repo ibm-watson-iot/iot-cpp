@@ -13,6 +13,8 @@
  * Contributors:
  *    Hari Prasada Reddy - Initial implementation
  *    Lokesh Haralakatta - Updates to match with latest mqtt lib changes
+ *    Lokesh Haralakatta - Added members to hold serverURI and clientID.
+ *    Lokesh Haralakatta - Added logging feature using log4cpp.
  *******************************************************************************/
 
 #ifndef SRC_IOTP_DEVICECLIENT_H_
@@ -24,25 +26,45 @@ namespace Watson_IOTP {
 
 class IOTP_DeviceClient: public IOTP_Client {
 public:
-	/** Pointer type for this object */
+	/* Pointer type for this object */
 	typedef std::shared_ptr<IOTP_DeviceClient> ptr_t;
-	/**
-	 * Constructor of an IOTF_Client.  The parameters are the same as
-	 * the constructor of the base class, mqtt::callback.
+	/*
+	 * Constructor of an IOTP_Client.  The parameters are:
+	 * Properties Instance
+	 * log4cpp properties file path
 	 */
-	IOTP_DeviceClient(Properties& prop);
-	//IOTP_Client(const std::string& uri, const std::string& clientId);
-	//IOTP_Client(Properties& prop, Watson_IOTP::IOTP_DeviceInfo* deviceInfo);
-	IOTP_DeviceClient(Properties& prop, iotf_device_data_ptr& deviceData);
+	IOTP_DeviceClient(Properties& prop,std::string logPropertiesFile="log4cpp.properties");
 
-	/**
-	 * Constructor of an IOTF_Client.
-	 * Required arguments are organization ID, device type and device ID.
+	/*
+	 * Constructor of an IOTP_Client.  The parameters are:
+	 * Properties Instance
+	 * deviceData Instance
+	 * log4cpp properties file path
 	 */
-	//IOTP_Client(Properties& prop, Watson_IOTP::IOTP_DeviceInfo* deviceInfo,
 	IOTP_DeviceClient(Properties& prop, iotf_device_data_ptr& deviceData,
-			iotp_device_action_handler_ptr& actionHandler, iotp_device_firmware_handler_ptr& firmwareHandler,
-			iotp_device_attribute_handler_ptr& devAttribureHandler);
+					std::string logPropertiesFile="log4cpp.properties");
+
+	/*
+	* Constructor of an IOTP_Client.  The parameters are:
+	* Properties Instance
+	* deviceData Instance
+	* deviceAction handler
+	* firmwareHandler
+	* devAttribureHandler
+	* log4cpp properties file path
+	*/
+	IOTP_DeviceClient(Properties& prop, iotf_device_data_ptr& deviceData,
+			iotp_device_action_handler_ptr& actionHandler,
+			iotp_device_firmware_handler_ptr& firmwareHandler,
+			iotp_device_attribute_handler_ptr& devAttribureHandler,
+			std::string logPropertiesFile="log4cpp.properties");
+
+	/*
+	* Constructor of an IOTP_Client.  The parameters are:
+	* WIoTP configuration file path
+	* log4cpp properties file path
+	*/
+	IOTP_DeviceClient(const std::string& filePath, std::string logPropertiesFile="log4cpp.properties");
 
 	~IOTP_DeviceClient(){}
 
@@ -121,9 +143,11 @@ public:
 
 private:
 	int mLifetime;
+	std::string mServerURI;
+	std::string mClientID;
 	iotp_device_attribute_handler_ptr mDevAttributeHandler;
 	iotf_device_data_ptr mDeviceData;
-	void InitializeMqttClient();
+	bool InitializeMqttClient();
 
 };
 typedef IOTP_DeviceClient::ptr_t iotp_device_client_ptr;
