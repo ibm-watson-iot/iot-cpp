@@ -26,7 +26,7 @@ namespace Watson_IOTP {
 // IOTP_DeviceClient constructor with properties instance
 IOTP_DeviceClient::IOTP_DeviceClient(Properties& prop,std::string logPropertiesFile) :
 	mDevAttributeHandler (nullptr), mDeviceData(nullptr),mLifetime(3600),
-	mServerURI(""),mClientID(""),IOTP_Client(prop,logPropertiesFile)
+	IOTP_Client(prop,logPropertiesFile)
 {
 
 }
@@ -34,7 +34,7 @@ IOTP_DeviceClient::IOTP_DeviceClient(Properties& prop,std::string logPropertiesF
 // IOTP_DeviceClient constructor with properties instance and deviceData
 IOTP_DeviceClient::IOTP_DeviceClient(Properties& prop, iotf_device_data_ptr& deviceData,std::string logPropertiesFile) :
 	mDevAttributeHandler (nullptr), mDeviceData(deviceData), mLifetime(3600),
-	mServerURI(""),mClientID(""),IOTP_Client(prop,logPropertiesFile)
+	IOTP_Client(prop,logPropertiesFile)
 {
 
 }
@@ -45,7 +45,7 @@ IOTP_DeviceClient::IOTP_DeviceClient(Properties& prop, iotf_device_data_ptr& dev
 		iotp_device_firmware_handler_ptr& firmwareHandler,
 		iotp_device_attribute_handler_ptr& devAttributeHandler,std::string logPropertiesFile) :
 		IOTP_Client(prop,actionHandler, firmwareHandler,logPropertiesFile), mDeviceData(deviceData),
-		mLifetime(3600), mServerURI(""),mClientID(""),mDevAttributeHandler(devAttributeHandler)
+		mLifetime(3600), mDevAttributeHandler(devAttributeHandler)
 {
 
 }
@@ -53,7 +53,7 @@ IOTP_DeviceClient::IOTP_DeviceClient(Properties& prop, iotf_device_data_ptr& dev
 // IOTP_DeviceClient constructor with properties file and log4cpp file
 IOTP_DeviceClient::IOTP_DeviceClient(const std::string& filePath, std::string logPropertiesFile):
 	mDevAttributeHandler (nullptr), mDeviceData(nullptr),mLifetime(3600),
-	mServerURI(""),mClientID(""),IOTP_Client(filePath,logPropertiesFile)
+	IOTP_Client(filePath,logPropertiesFile)
 {
 
 }
@@ -72,10 +72,14 @@ bool IOTP_DeviceClient::connect()
 	bool rc = false;
 	if(InitializeMqttClient()){
 		console.info("Device Client connecting to " + mServerURI +
-			" with client-id: " + mClientID);
+			" with client-id " + mClientID);
 		rc = IOTP_Client::connect();
-		if(mProperties.getorgId().compare("quickstart") != 0)
+
+		if(rc)
+		   if(mProperties.getorgId().compare("quickstart") != 0)
 			subscribeCommands();
+		else
+		   console.error("Device Client connecting to " + mServerURI + "failed !!!");
 	}
 	else {
 		console.error("Initializing MQTT Client Failed...");
@@ -140,12 +144,27 @@ void IOTP_DeviceClient::publishEvent(char *eventType, char *eventFormat, const c
 bool IOTP_DeviceClient::subscribeCommands() {
 	std::string methodName = __func__;
 	logger.debug(methodName+" Entry: ");
-	std::string topic = "iot-2/cmd/+/fmt/+";
-	logger.debug("subscribeTopic: " + topic);
 	int qos = 1;
-	bool ret = this->subscribeTopic(topic, qos);
+	logger.debug("Calling subscribeTopic() for " + commandTopic);
+	bool rc = this->subscribeTopic(commandTopic, qos);
 	logger.debug(methodName+" Exit: ");
-	return ret;
+	return rc;
+}
+
+/**
+* Function used to disconnect from the IBM Watson IoT Service.
+* Removes any command related subsriptions and calls the base class diconnect.
+**/
+void IOTP_DeviceClient::disconnect(){
+	std::string methodName = __PRETTY_FUNCTION__;
+	logger.debug(methodName+" Entry: ");
+	if(commandTopic.size() >0){
+		logger.debug("Calling unsubscribeCommands() for the topic - " + commandTopic);
+		unsubscribeCommands(commandTopic);
+	}
+
+	IOTP_Client::disconnect();
+	logger.debug(methodName+" Exit: ");
 }
 
 bool IOTP_DeviceClient::manage() {

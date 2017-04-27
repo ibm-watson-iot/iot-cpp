@@ -13,7 +13,6 @@
  * Contributors:
  *    Hari Prasada Reddy - Initial implementation
  *    Lokesh Haralakatta - Updates to match with latest mqtt lib changes
- *    Lokesh Haralakatta - Added members to hold serverURI and clientID.
  *    Lokesh Haralakatta - Added logging feature using log4cpp.
  *******************************************************************************/
 
@@ -139,19 +138,22 @@ public:
 	 */
 	bool clearLogs();
 
-
+	/**
+	* Function used to disconnect from the IBM Watson IoT Service.
+	* Removes any command related subsriptions and calls the base class diconnect.
+	**/
+	void disconnect();
 
 private:
 	int mLifetime;
-	std::string mServerURI;
-	std::string mClientID;
 	iotp_device_attribute_handler_ptr mDevAttributeHandler;
 	iotf_device_data_ptr mDeviceData;
 	bool InitializeMqttClient();
+	static std::string commandTopic;
 
 };
 typedef IOTP_DeviceClient::ptr_t iotp_device_client_ptr;
-
+std::string IOTP_DeviceClient::commandTopic = "iot-2/cmd/+/fmt/+";
 } /* namespace Watson_IOTP */
 
 #endif /* SRC_IOTP_DEVICECLIENT_H_ */

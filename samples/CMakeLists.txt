@@ -10,11 +10,13 @@ set(LIBS
     )
 
 add_executable(sslDeviceSample sslDeviceSample.cpp)
+add_executable(sslGatewaySample sslGatewaySample.cpp)
 add_executable(sampleQuickstart sampleQuickstart.cpp)
 add_executable(sampleDevice sampleDevice.cpp)
 add_executable(sampleGateway sampleGateway.cpp)
 
 target_link_libraries(sslDeviceSample  IOTP_DeviceClient)
+target_link_libraries(sslGatewaySample  IOTP_GatewayClient)
 
 target_link_libraries(sampleQuickstart  IOTP_DeviceClient IOTP_ResponseHandler)
 target_link_libraries(sampleGateway  IOTP_GatewayClient ${LIBS})

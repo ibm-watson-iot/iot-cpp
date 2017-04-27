@@ -16,7 +16,7 @@
 
  #include <iostream>
 
- #include "IOTP_DeviceClient.h"
+ #include "IOTP_GatewayClient.h"
  #include "Properties.h"
 
  using namespace std;
@@ -26,32 +26,32 @@
         Properties p;
         bool success = false;
         int rc = -1;
-        /*p.setorgId("Org-ID");
+        /*p.setorgId("Org-Id");
         p.setdomain("internetofthings.ibmcloud.com");
-        p.setdeviceType("type");
-        p.setdeviceId("id");
+        p.setdeviceType("gType");
+        p.setdeviceId("gId");
         p.setauthMethod("token");
-        p.setauthToken("password"); */
+        p.setauthToken("password");*/
 
         try {
-                //IOTP_DeviceClient client(p);
-                IOTP_DeviceClient client("../samples/device.cfg");
+                //IOTP_GatewayClient client(p);
+                IOTP_GatewayClient client("../samples/gateway.cfg");
                 success = client.connect();
                 if(success){
-                        client.publishEvent("test", "text", "sample data", 0);
+                        client.subscribeDeviceCommands("attached","testGatewayPublish");
+                        client.publishGatewayEvent("test", "text", "sample gateway data", 0);
+                        client.publishDeviceEvent("attached","testGatewayPublish","test", "text", "sample gateway data", 0);
                         client.disconnect();
                 }
                 else{
-                        client.console.error("Failed connecting client to Watson IoT platform...");
+                        client.console.error("Failed connecting gateway client to Watson IoT platform...");
                 }
 
                 rc = 0;
         }
         catch (const mqtt::exception& exc) {
-		cout<<"Error: "<<exc.what();
-                rc = -1;
+		std::cerr << "Error: " << exc.what() << std::endl;
 	}
 
-        //log4cpp::Category::shutdown();
         return rc;
 }
