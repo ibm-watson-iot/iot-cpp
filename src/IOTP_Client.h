@@ -16,6 +16,7 @@
  *    Lokesh Haralakatta - Updates to match with latest mqtt lib changes
  *    Lokesh Haralakatta - Added method to parse WIoTP configuration from file.
  *    Lokesh Haralakatta - Added log4cpp integration code for logging.
+ *    Lokesh Haralakatta - Added members to hold serverURI and clientID.
  *******************************************************************************/
 
 #ifndef IOTF_CLIENT_H_
@@ -247,7 +248,8 @@ namespace Watson_IOTP {
 			iotp_device_action_handler_ptr mActionHandler;
 			iotp_device_firmware_handler_ptr mFirmwareHandler;
 			Properties mProperties;
-
+			std::string mServerURI;
+			std::string mClientID;
 		private:
 
 			void _send_reply();

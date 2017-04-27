@@ -13,6 +13,7 @@
  * Contributors:
  *    Hari Prasada Reddy - Initial implementation
  *    Lokesh Haralakatta - Updates to match with latest mqtt lib changes
+ *    Lokesh Haralakatta - Added logging feature using log4cpp.
  *******************************************************************************/
 #include "IOTP_Client.h"
 
@@ -21,7 +22,19 @@ namespace Watson_IOTP {
 class IOTP_GatewayClient: public IOTP_Client {
 
 public:
-	IOTP_GatewayClient(Properties& prop);
+	/*
+	 * Constructor of an IOTP_Client.  The parameters are:
+	 * Properties Instance
+	 * log4cpp properties file path
+	 */
+	IOTP_GatewayClient(Properties& prop,std::string logPropertiesFile="log4cpp.properties");
+
+	/*
+	* Constructor of an IOTP_Client.  The parameters are:
+	* WIoTP configuration file path
+	* log4cpp properties file path
+	*/
+	IOTP_GatewayClient(const std::string& filePath, std::string logPropertiesFile="log4cpp.properties");
 
 	/**
 	 * Connect to Watson IoT Platform messaging server using default options.
@@ -92,11 +105,18 @@ public:
 	 */
 	bool subscribeDeviceCommands(char* deviceType, char* deviceId);
 
+	/**
+	* Function used to disconnect from the IBM Watson IoT Service.
+	* Removes any command related subsriptions and calls the base class disconnect.
+	**/
+	void disconnect();
 
 	~IOTP_GatewayClient(){}
 
 private:
 	bool InitializeMqttClient();
+	std::string deviceCMDTopic;
+	std::string gatewayCMDTopic;
 };
 
 
