@@ -256,6 +256,7 @@ namespace Watson_IOTP {
 			iotf_callback_ptr set_callback();
 			void InitializeProperties(Properties& prop);
 			bool InitializePropertiesFromFile(const std::string& filePath,Properties& prop);
+			void dumpProperties();
 			unsigned long mReqCounter;
 			iotf_callback_ptr callback_ptr;
 			mutable std::mutex mLock;
