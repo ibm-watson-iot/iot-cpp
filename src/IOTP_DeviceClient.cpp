@@ -71,13 +71,21 @@ bool IOTP_DeviceClient::connect()
 	logger.debug(methodName+" Entry: ");
 	bool rc = false;
 	if(InitializeMqttClient()){
-		console.info("Device Client connecting to " + mServerURI +
-			" with client-id " + mClientID);
+		if(mProperties.getuseCerts()){
+			console.info("Device Client connecting using Client Certificates to " +
+					mServerURI + " with client-id " + mClientID);
+		}
+		else {
+			console.info("Device Client connecting to " + mServerURI + " with client-id " +
+					mClientID);
+		}
+
 		rc = IOTP_Client::connect();
 
-		if(rc)
+		if(rc){
 		   if(mProperties.getorgId().compare("quickstart") != 0)
 			subscribeCommands();
+		}
 		else
 		   console.error("Device Client connecting to " + mServerURI + "failed !!!");
 	}
@@ -284,19 +292,28 @@ bool IOTP_DeviceClient::InitializeMqttClient() {
 		console.error(methodName+ ": Device-Id can not be empty / null");
 		rc = false;
 	}
+	else if(mProperties.getorgId().compare("quickstart") != 0 &&
+	 	mProperties.gettrustStore().size() == 0){
+		console.error(methodName+ ": clientTrustStorePath can not be empty / null");
+		rc = false;
+	}
 	else{
-		std::string serverURI = "tcp://" + mProperties.getorgId() + ".messaging." +
+		if(mProperties.getorgId().compare("quickstart") != 0) {
+			mServerURI = "ssl://" + mProperties.getorgId() + ".messaging." +
+						mProperties.getdomain()+":8883";
+		}
+		else {
+			mServerURI = "tcp://" + mProperties.getorgId() + ".messaging." +
 						mProperties.getdomain()+":1883";
+		}
 
-		std::string clientId = "d:" + mProperties.getorgId() + ":" + mProperties.getdeviceType() +
+		mClientID = "d:" + mProperties.getorgId() + ":" + mProperties.getdeviceType() +
 						":" + mProperties.getdeviceId();
 
-		mServerURI = serverURI;
-		mClientID = clientId;
-		logger.debug("serverURI: " + serverURI);
-		logger.debug("clientId: " + clientId);
+		logger.debug("serverURI: " + mServerURI);
+		logger.debug("clientId: " + mClientID);
 
-		pasync_client = new mqtt::async_client(serverURI, clientId);
+		pasync_client = new mqtt::async_client(mServerURI, mClientID);
 		logger.debug("Underlying async_client created...");
 	}
 

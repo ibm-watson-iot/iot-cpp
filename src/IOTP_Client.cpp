@@ -260,7 +260,7 @@ namespace Watson_IOTP {
 				else
 					prop.setorgId(org);
 
-				std::string domain = root.get("domain", "").asString();
+				std::string domain = root.get("Domain", "").asString();
 				if (domain.size() != 0)
 					prop.setdomain(domain);
 
@@ -296,6 +296,47 @@ namespace Watson_IOTP {
 					}
 					else
 						prop.setauthToken(password);
+
+					std::string trustStore = root.get("clientTrustStorePath", "").asString();
+					if (trustStore.size() == 0) {
+						logger.error("Failed to parse clientTrustStorePath from given configuration.");
+						rc = false;
+					}
+					else
+						prop.settrustStore(trustStore);
+
+					std::string useCerts = root.get("useClientCertificates", "false").asString();
+					if (useCerts.size() == 0){
+						logger.error("Failed to parse useClientCertificates from given configuration.");
+						rc = false;
+					}
+					else{
+						if (useCerts.compare("true") == 0)
+							prop.setuseCerts(true);
+						else
+							prop.setuseCerts(false);
+					}
+
+					if (prop.getuseCerts()){
+						std::string keyStore = root.get("clientCertPath","").asString();
+						if (keyStore.size() == 0){
+							logger.error("Failed to parse clientCertPath from given configuration.");
+							rc = false;
+						}
+						else
+							prop.setkeyStore(keyStore);
+
+						std::string privateKey = root.get("clientKeyPath","").asString();
+						if (privateKey.size() == 0){
+							logger.error("Failed to parse clientKeyPath from given configuration.");
+							rc = false;
+						}
+						else
+							prop.setprivateKey(privateKey);
+
+						std::string passPhrase = root.get("clientKeyPassword","").asString();
+						prop.setkeyPassPhrase(passPhrase);
+					}
 				}
 			}
 		}
@@ -308,6 +349,26 @@ namespace Watson_IOTP {
 		return rc;
 	}
 
+	// Method to dump properties to log file for reference
+	void IOTP_Client::dumpProperties(){
+		std::string methodName = __func__;
+		logger.debug(methodName+" Entry: ");
+		//Add debug stmts for reference
+		logger.debug("Organization: " + mProperties.getorgId());
+		logger.debug("Domain: " + mProperties.getdomain());
+		logger.debug("DeviceType: " + mProperties.getdeviceType());
+		logger.debug("Device Id: " + mProperties.getdeviceId());
+		logger.debug("Auth Method: " + mProperties.getauthMethod());
+		logger.debug("Auth Token: " + mProperties.getauthToken());
+		logger.debug("Trust Store Path: " + mProperties.gettrustStore());
+		std::string useCerts = (mProperties.getuseCerts()?"true":"false");
+		logger.debug("Use Client Certs: " + useCerts);
+		logger.debug("Client Cert Path: " + mProperties.getkeyStore());
+		logger.debug("Client Key Path: " + mProperties.getprivateKey());
+		logger.debug("Client Key Password: " + mProperties.getkeyPassPhrase());
+
+		logger.debug(methodName+" Exit: ");
+	}
 	// IOTP_Client constructor using a properties file
 	IOTP_Client::IOTP_Client(const std::string& filePath, std::string logPropertiesFile):
 		mServerURI(""),mClientID("")
@@ -324,13 +385,8 @@ namespace Watson_IOTP {
 		    mResponseHandler = std::make_shared<IOTP_ResponseHandler> ();
 		    mReplyThread = std::thread(&IOTP_Client::_send_reply, this);
 		    mKeepAliveInterval = 60;
-		    //Add debug stmts for reference
-		    logger.debug("Organization: " + mProperties.getorgId());
-		    logger.debug("Domain: " + mProperties.getdomain());
-		    logger.debug("DeviceType: " + mProperties.getdeviceType());
-		    logger.debug("Device Id: " + mProperties.getdeviceId());
-		    logger.debug("Auth Method: " + mProperties.getauthMethod());
-		    logger.debug("Auth Token: " + mProperties.getauthToken());
+		    //Dump properties to log file
+		    dumpProperties();
 	        }
 		else {
 		    console.error("Failed parsing configuration values from file: "+filePath);
@@ -346,13 +402,8 @@ namespace Watson_IOTP {
 		std::string methodName = __PRETTY_FUNCTION__;
 		logger.debug(methodName+" Entry: ");
 		InitializeProperties(prop);
-		//Add debug stmts for reference
-		logger.debug("Organization: " + mProperties.getorgId());
-		logger.debug("Domain: " + mProperties.getdomain());
-		logger.debug("DeviceType: " + mProperties.getdeviceType());
-		logger.debug("Device Id: " + mProperties.getdeviceId());
-		logger.debug("Auth Method: " + mProperties.getauthMethod());
-		logger.debug("Auth Token: " + mProperties.getauthToken());
+		//Dump properties to log file
+		dumpProperties();
 		logger.debug(methodName+" Exit: ");
 	}
 
@@ -368,13 +419,8 @@ namespace Watson_IOTP {
 		InitializeProperties(prop);
 		mActionHandler = actionHandler;
 		mFirmwareHandler = firmwareHandler;
-		//Add debug stmts for reference
-		logger.debug("Organization: " + mProperties.getorgId());
-		logger.debug("Domain: " + mProperties.getdomain());
-		logger.debug("DeviceType: " + mProperties.getdeviceType());
-		logger.debug("Device Id: " + mProperties.getdeviceId());
-		logger.debug("Auth Method: " + mProperties.getauthMethod());
-		logger.debug("Auth Token: " + mProperties.getauthToken());
+		//Dump properties to log file
+		dumpProperties();
 
 		logger.debug(methodName+" Exit: ");
 	}
@@ -439,6 +485,28 @@ namespace Watson_IOTP {
 			passwd = mProperties.getauthToken();
 			connectOptions.set_user_name(usrName);
 			connectOptions.set_password(passwd);
+
+			logger.debug("connectOptions: username - " + connectOptions.get_user_name());
+			logger.debug("connectOptions: password - " + connectOptions.get_password());
+
+			mqtt::ssl_options sslopts;
+			std::string clientTrustStore = mProperties.gettrustStore();
+			std::string clientPassPhrase = mProperties.getkeyPassPhrase();
+			if(clientTrustStore.size()>0){
+				sslopts.set_trust_store(clientTrustStore);
+				logger.debug("sslOptions: trustStore - " + sslopts.get_trust_store());
+			}
+			if(mProperties.getuseCerts()){
+				sslopts.set_key_store(mProperties.getkeyStore());
+				sslopts.set_private_key(mProperties.getprivateKey());
+				logger.debug("sslOptions: keyStore - " + sslopts.get_key_store());
+				logger.debug("sslOptions: privateKey - " + sslopts.get_private_key());
+				if(clientPassPhrase.size()>0){
+					sslopts.set_private_key_password(clientPassPhrase);
+					logger.debug("sslOptions: privateKeyPassword - " + sslopts.get_private_key_password());
+				}
+			}
+			connectOptions.set_ssl(sslopts);
 		}
 
 
