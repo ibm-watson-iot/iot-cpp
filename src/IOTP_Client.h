@@ -239,6 +239,17 @@ namespace Watson_IOTP {
 			void IOTF_send_reply(iotp_reply_message_ptr reply);
 			static std::string jsonValueToString(Json::Value& jsonValue);
 
+			/**
+			* Getter methods to retrieve client properties.
+			*/
+			std::string getorgId(){ return mProperties.getorgId();}
+			std::string getdomain(){ return mProperties.getdomain();}
+			std::string getdeviceType(){ return mProperties.getdeviceType();}
+			std::string getdeviceId(){ return mProperties.getdeviceId();}
+			std::string getauthMethod(){ return mProperties.getauthMethod();}
+			std::string getauthToken(){ return mProperties.getauthToken();}
+			std::string gettrustStore(){ return mProperties.gettrustStore();}
+
 		protected:
 			std::string send_message(const std::string& topic, const Json::Value& data, int qos = 1);
 			bool pushManageMessage(std::string topic, Json::Value data);
