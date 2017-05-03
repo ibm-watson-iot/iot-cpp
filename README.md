@@ -1,9 +1,8 @@
-Device Management update in progress
 
 C++ Client Library - Introduction
 ============================================
 
-This C++ Client Library can be used to simplify interactions with the [IBM Watson IoT Platform](https://internetofthings.ibmcloud.com). 
+This C++ Client Library can be used to simplify interactions with the [IBM Watson IoT Platform](https://internetofthings.ibmcloud.com). Supported platforms are OSX and Linux.
 
 Supported Features
 ------------------
@@ -19,53 +18,64 @@ Supported Features
 | [Device Management Extension(DME)](https://console.ng.bluemix.net/docs/services/IoT/devices/device_mgmt/custom_actions.html) | &#10008; | Support to be added in the near future|
 | Auto reconnect | &#10008; |Support to be added in the near future|
 
-
-Installing the Dependencies
----------------------------
-Run the setup.sh file in the iot-cpp directory.
-This script will install following Dependencies and it will copy the dependencies into the lib directory after making necessary changes.
-
 Dependencies
 ------------
 
-1.  [paho mqtt cpp Client]
+1.  [Paho MQTT C++ Client]
 
-  [paho mqtt cpp Client]: https://eclipse.org/paho/clients/cpp/
-  Following version of paho MQTT library is used for this client library
-  https://github.com/eclipse/paho.mqtt.cpp/archive/master.zip
+  [Paho MQTT C++ Client]: https://eclipse.org/paho/clients/cpp/
   
-2.  [paho mqtt c Client]
-  https://github.com/eclipse/paho.mqtt.c/archive/master.zip
+2.  [Paho MQTT C Client]
 
-3.  jsoncpp
-  https://github.com/open-source-parsers/jsoncpp/archive/master.zip
+  [Paho MQTT C Client]: https://eclipse.org/paho/clients/c/
+
+3.  [A C++ library for interacting with JSON - jsoncpp]
+
+  [A C++ library for interacting with JSON - jsoncpp]: https://github.com/open-source-parsers/jsoncpp
+  
+4.  [Log library for C++ - log4cpp]
+
+  [Log library for C++ - log4cpp]: https://sourceforge.net/projects/log4cpp/
+ 
+5.  [A C++ Unit Testing Framework - CppTest]
+
+    [A C++ Unit Testing Framework - CppTest]: http://cpptest.sourceforge.net/
+    
+6.  [CMake Build Tool]
+
+  [CMake Build Tool]: https://cmake.org/
+ 
+Installing the Dependencies
+---------------------------
+Run the [setup.sh](https://github.com/ibm-watson-iot/iot-cpp/blob/master/setup.sh) file in the iot-cpp directory. This script installs the required dependencies and copies the dependencies into the lib directory after making necessary changes.
 
 Note:
-If the dependencies were not able to be installed with the script on the device, manually pull the dependencies from the links mentioned above and follow the steps in the setup.sh file for making the necessary changes.
+If the dependencies were not able to be installed with the script on the device, manually pull the dependencies from the links mentioned in [setup.sh](https://github.com/ibm-watson-iot/iot-cpp/blob/master/setup.sh) and follow the steps for making the necessary changes.
 
 Build Instructions 
 ------------------
-For building the client library and the sample application cmake is required.
-Install cmake by following the instrctions in the link https://cmake.org/install/
-Once cmake is installed 
 
-1.  Go to the build directory under root directory (iot-cpp/build).
-2.  Run the command cmake ..
-3.  Run the command make
+1.  Install [CMake](https://cmake.org/install/)
+2.  git clone https://github.com/ibm-watson-iot/iot-cpp.git
+3.  cd iot-cpp
+4.  sh setup.sh 
+5.  mkdir build ; cd build 
+6.  cmake ..
+7.  make
+
 All the output files will be created under the build directory.
 
 Running samples
 ---------------
-Execute quick start sample (sampleQuickstart) with the following command from build directory
-./samples/sampleQuickstart <Path to quick start configuration file in json format>
 
-Similarly device client (sampleDevice) can be executed with the following command from build directory
-./samples/sampleDevice <Path to device configuration file in json format>
+1. cp iot-cpp/src/log4cpp.properties iot-cpp/build
+2. Update device.cfg and gateway.cfg properties files present in iot-cpp/samples
+3. cd iot-cpp/build
+4. Execute Device Sample: ./samples/sampleDevice
+5. Execute Gateway Sample: ./samples/sampleGateway
 
-Similarly gateway client (sampleGateway) can be executed with the following command from build directory
-./samples/sampleGateway <Path to gateway configuration file in json format>
-
-The documentation is divided into following sections:  
+Detailed Documentation
+----------------------
 
 - The [Device section] (docs/cpp_cli_for_devices.rst) contains information on how devices publish events and handle commands using the C++ ibmiotf Client Library. 
 - The [Managed Device section] (docs/cpp_cli_for_manageddevice.rst) contains information on how devices can connect to the Watson IoT Platform Device Management service using C++ ibmiotf Client Library and perform device management operations like firmware update, location update, and diagnostics update.
