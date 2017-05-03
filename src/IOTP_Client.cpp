@@ -16,6 +16,8 @@
  *    Lokesh Haralakatta - Updates to match with latest mqtt lib changes.
  *    Lokesh Haralakatta - Added method to parse WIoTP configuration from file.
  *    Lokesh Haralakatta - Added log4cpp integration code for logging.
+ *    Lokesh K Haralakatta - Added SSL/TLS Support.
+ *    Lokesh K Haralakatta - Added custom port support.
  *******************************************************************************/
 
 #include <algorithm>
@@ -280,6 +282,18 @@ namespace Watson_IOTP {
 				else
 					prop.setdeviceId(deviceId);
 
+				std::string customPort = root.get("Port", "8883").asString();
+				if (customPort.size() == 0){
+					logger.error("Failed to parse useClientCertificates from given configuration.");
+					rc = false;
+				}
+				else{
+					if (prop.getorgId().compare("quickstart") == 0)
+						prop.setPort(1883);
+					else
+						prop.setPort(std::stoi(customPort));
+				}
+
 				if(org.compare("quickstart") != 0) {
 					std::string username = root.get("Authentication-Method", "").asString();
 					if (username.size() == 0) {
@@ -361,6 +375,7 @@ namespace Watson_IOTP {
 		logger.debug("Auth Method: " + mProperties.getauthMethod());
 		logger.debug("Auth Token: " + mProperties.getauthToken());
 		logger.debug("Trust Store Path: " + mProperties.gettrustStore());
+		logger.debug("Port: " + std::to_string(mProperties.getPort()));
 		std::string useCerts = (mProperties.getuseCerts()?"true":"false");
 		logger.debug("Use Client Certs: " + useCerts);
 		logger.debug("Client Cert Path: " + mProperties.getkeyStore());

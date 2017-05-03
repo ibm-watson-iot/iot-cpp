@@ -15,6 +15,8 @@
  *    Lokesh Haralakatta - Updates to match with latest mqtt lib changes
  *    Lokesh Haralakatta - Added members to hold serverURI and clientID.
  *    Lokesh Haralakatta - Added logging feature using log4cpp.
+ *    Lokesh K Haralakatta - Added SSL/TLS Support.
+ *    Lokesh K Haralakatta - Added custom port support
  *******************************************************************************/
 
 #include "IOTP_DeviceClient.h"
@@ -300,7 +302,7 @@ bool IOTP_DeviceClient::InitializeMqttClient() {
 	else{
 		if(mProperties.getorgId().compare("quickstart") != 0) {
 			mServerURI = "ssl://" + mProperties.getorgId() + ".messaging." +
-						mProperties.getdomain()+":8883";
+			mProperties.getdomain()+":"+ std::to_string(mProperties.getPort());
 		}
 		else {
 			mServerURI = "tcp://" + mProperties.getorgId() + ".messaging." +

@@ -12,6 +12,7 @@
  *
  * Contributors:
  *    Lokesh K Haralakatta - Unit Tests to test IOTP_GatewayClient code
+ *    Lokesh K Haralakatta - Added unit tests for custom port support
  *******************************************************************************/
 
 #include <cpptest.h>
@@ -28,12 +29,14 @@ class gatewayClientTest : public Test::Suite {
         void testInitializeGatewayClient();
         void testInitializeGatewayClientFromFile();
         void testConnectAndPubSub();
+        void testConnectAndPubSubWith443();
 
     public:
         gatewayClientTest( ) {
                 TEST_ADD (gatewayClientTest::testInitializeGatewayClient);
                 TEST_ADD (gatewayClientTest::testInitializeGatewayClientFromFile);
                 TEST_ADD (gatewayClientTest::testConnectAndPubSub);
+                TEST_ADD (gatewayClientTest::testConnectAndPubSubWith443);
         }
 };
 
@@ -71,6 +74,7 @@ void gatewayClientTest:: testInitializeGatewayClient(){
         p.setdeviceId("id");
         p.setauthMethod("token");
         p.setauthToken("password");
+        p.setPort(443);
         p.settrustStore("IoTFoundation.pem");
 
         //Create Gateway Client Instance using Properties Instance
@@ -84,6 +88,7 @@ void gatewayClientTest:: testInitializeGatewayClient(){
         TEST_ASSERT(client.getauthMethod().compare(p.getauthMethod()) == 0);
         TEST_ASSERT(client.getauthToken().compare(p.getauthToken()) == 0);
         TEST_ASSERT(client.gettrustStore().compare(p.gettrustStore()) == 0);
+        TEST_ASSERT(client.getPort() == p.getPort());
 }
 
 void gatewayClientTest:: testInitializeGatewayClientFromFile(){
@@ -98,6 +103,7 @@ void gatewayClientTest:: testInitializeGatewayClientFromFile(){
         TEST_ASSERT(client.getauthMethod().compare("token") == 0);
         TEST_ASSERT(client.getauthToken().compare("password") == 0);
         TEST_ASSERT(client.gettrustStore().compare("IoTFoundation.pem") == 0);
+        TEST_ASSERT(client.getPort() == 8883);
 }
 
 void gatewayClientTest:: testConnectAndPubSub(){
@@ -107,6 +113,47 @@ void gatewayClientTest:: testConnectAndPubSub(){
 
         //Create Gateway Client Instance using gateway.cfg file
         IOTP_GatewayClient client("../test/gateway.cfg");
+
+        //Connect to IoTP
+        TEST_ASSERT(client.connect() == true);
+
+        //Status should be connected
+        TEST_ASSERT(client.isConnected() == true);
+
+        //Subscribing to Device Commands should be true
+        TEST_ASSERT(client.subscribeDeviceCommands("attached","testGatewayPublish") == true);
+
+        //Set command handler
+        client.setCommandHandler(&myCallback);
+
+        //Initialize Json message & Publish Gateway Event with and without  listener
+        jsonMessage = "{\"Data\": {\"Temp\": \"34\" } }";
+        client.publishGatewayEvent("utGatewayTemp", "json", jsonMessage.c_str(), 0);
+        this_thread::sleep_for (chrono::seconds(1));
+        client.publishGatewayEvent("utGatewayTemp", "json", jsonMessage.c_str(), 0,listener);
+        this_thread::sleep_for (chrono::seconds(1));
+
+        //Initialize Json message & Publish Device Event with and without  listener
+        jsonMessage = "{\"Data\": {\"Temp\": \"44\" } }";
+        client.publishDeviceEvent("attached","testGatewayPublish","utDeviceTemp",
+                        "json", jsonMessage.c_str(), 0);
+        this_thread::sleep_for (chrono::seconds(1));
+        client.publishDeviceEvent("attached","testGatewayPublish","utDeviceTemp",
+                        "json", jsonMessage.c_str(), 0,listener);
+        this_thread::sleep_for (chrono::seconds(1));
+
+        //Disconnect gateway client if connected
+        if(client.isConnected())
+                client.disconnect();
+}
+
+void gatewayClientTest:: testConnectAndPubSubWith443(){
+        SampleActionListener listener;
+        MyCommandCallback myCallback;
+        std::string jsonMessage;
+
+        //Create Gateway Client Instance using gateway.cfg file
+        IOTP_GatewayClient client("../test/gateway_443.cfg");
 
         //Connect to IoTP
         TEST_ASSERT(client.connect() == true);

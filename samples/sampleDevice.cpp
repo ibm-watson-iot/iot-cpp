@@ -77,6 +77,7 @@
         p.setdeviceId("id");
         p.setauthMethod("token");
         p.setauthToken("password");
+        p.setPort("8883");
         p.settrustStore("iot-cpp-home/IoTFoudnation.pem")*/
 
         try {
