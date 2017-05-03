@@ -12,6 +12,7 @@
  *
  * Contributors:
  *    Lokesh K Haralakatta - Unit Tests to test IOTP_DeviceClient code
+ *    Lokesh K Haralakatta - Added unit tests for custom port support
  *******************************************************************************/
 
 #include <cpptest.h>
@@ -29,6 +30,7 @@ class deviceClientTest : public Test::Suite {
         void testInitializeDeviceClientFromFile();
         void testConnectAndPublishInQSMode();
         void testConnectAndPublishInRegMode();
+        void testConnectAndPublishWith443();
 
     public:
         deviceClientTest( ) {
@@ -36,6 +38,7 @@ class deviceClientTest : public Test::Suite {
                 TEST_ADD (deviceClientTest::testInitializeDeviceClientFromFile);
                 TEST_ADD (deviceClientTest::testConnectAndPublishInQSMode);
                 TEST_ADD (deviceClientTest::testConnectAndPublishInRegMode);
+                TEST_ADD (deviceClientTest::testConnectAndPublishWith443);
         }
 };
 
@@ -74,6 +77,7 @@ void deviceClientTest:: testInitializeDeviceClient(){
         p.setdeviceId("id");
         p.setauthMethod("token");
         p.setauthToken("password");
+        p.setPort(443);
         p.settrustStore("IoTFoundation.pem");
 
         //Create Device Client Instance using Properties Instance
@@ -87,6 +91,7 @@ void deviceClientTest:: testInitializeDeviceClient(){
         TEST_ASSERT(client.getauthMethod().compare(p.getauthMethod()) == 0);
         TEST_ASSERT(client.getauthToken().compare(p.getauthToken()) == 0);
         TEST_ASSERT(client.gettrustStore().compare(p.gettrustStore()) == 0);
+        TEST_ASSERT(client.getPort() == p.getPort());
 }
 
 void deviceClientTest:: testInitializeDeviceClientFromFile(){
@@ -101,6 +106,7 @@ void deviceClientTest:: testInitializeDeviceClientFromFile(){
         TEST_ASSERT(client.getauthMethod().compare("token") == 0);
         TEST_ASSERT(client.getauthToken().compare("password") == 0);
         TEST_ASSERT(client.gettrustStore().compare("IoTFoundation.pem") == 0);
+        TEST_ASSERT(client.getPort() == 8883);
 }
 
 void deviceClientTest:: testConnectAndPublishInQSMode(){
@@ -130,7 +136,7 @@ void deviceClientTest:: testConnectAndPublishInRegMode(){
         MyCommandCallback myCallback;
         std::string jsonMessage;
 
-        //Create Device Client Instance using test.cfg file
+        //Create Device Client Instance using device.cfg file
         IOTP_DeviceClient client("../test/device.cfg");
 
         //Connect to IoTP
@@ -157,6 +163,40 @@ void deviceClientTest:: testConnectAndPublishInRegMode(){
         if(client.isConnected())
                 client.disconnect();
 }
+
+void deviceClientTest:: testConnectAndPublishWith443(){
+        SampleActionListener listener;
+        MyCommandCallback myCallback;
+        std::string jsonMessage;
+
+        //Create Device Client Instance using device_443.cfg file
+        IOTP_DeviceClient client("../test/device_443.cfg");
+
+        //Connect to IoTP
+        TEST_ASSERT(client.connect() == true);
+
+        //Status should be connected
+        TEST_ASSERT(client.isConnected() == true);
+
+        //Set command handler
+        client.setCommandHandler(&myCallback);
+
+        //Initialize Json Message to publishEvent
+        jsonMessage = "{\"Data\": {\"Temp\": \"34\" } }";
+
+        //Publish Event without listener
+        client.publishEvent("unitTestTemp","json",jsonMessage.c_str(),0);
+        this_thread::sleep_for (chrono::seconds(1));
+
+        //Publish Event with listener
+        client.publishEvent("unitTestTemp","json",jsonMessage.c_str(),0,listener);
+        this_thread::sleep_for (chrono::seconds(1));
+
+        //Disconnect gateway client if connected
+        if(client.isConnected())
+                client.disconnect();
+}
+
 int main ( )
 {
   deviceClientTest tests;

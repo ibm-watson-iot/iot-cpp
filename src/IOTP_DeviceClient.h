@@ -14,6 +14,7 @@
  *    Hari Prasada Reddy - Initial implementation
  *    Lokesh Haralakatta - Updates to match with latest mqtt lib changes
  *    Lokesh Haralakatta - Added logging feature using log4cpp.
+ *    Lokesh K Haralakatta - Added SSL/TLS Support.
  *******************************************************************************/
 
 #ifndef SRC_IOTP_DEVICECLIENT_H_

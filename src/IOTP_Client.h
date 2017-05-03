@@ -17,6 +17,8 @@
  *    Lokesh Haralakatta - Added method to parse WIoTP configuration from file.
  *    Lokesh Haralakatta - Added log4cpp integration code for logging.
  *    Lokesh Haralakatta - Added members to hold serverURI and clientID.
+ *    Lokesh K Haralakatta - Added SSL/TLS Support.
+ *    Lokesh K Haralakatta - Added custom port support.
  *******************************************************************************/
 
 #ifndef IOTF_CLIENT_H_
@@ -249,6 +251,7 @@ namespace Watson_IOTP {
 			std::string getauthMethod(){ return mProperties.getauthMethod();}
 			std::string getauthToken(){ return mProperties.getauthToken();}
 			std::string gettrustStore(){ return mProperties.gettrustStore();}
+			int getPort(){ return mProperties.getPort();}
 
 		protected:
 			std::string send_message(const std::string& topic, const Json::Value& data, int qos = 1);
