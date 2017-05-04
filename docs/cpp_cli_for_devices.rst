@@ -24,7 +24,7 @@ The constructor builds the device client instance, and accepts a Properties obje
 
 The Properties class has setter/getter methods to initialize the values which are used to interact with the Watson IoT Platform module. 
 
-The following code shows a device client publishing events in a Quickstart mode.
+The following code shows a device client instantiation using properties object in a Quickstart mode.
 
 
 .. code:: C++
@@ -35,31 +35,12 @@ The following code shows a device client publishing events in a Quickstart mode.
 	prop.setdeviceType("devicetest");
 	prop.setdeviceId("haritestdevice");
 
-	std::cout<<"Creating IoTP Client with properties for quickstart mode"<<std::endl;
-	IOTP_DeviceClient quickClient(prop);
-	std::cout << "Connecting quick start client to Watson IoT platform" << std::endl;
-	success = quickClient.connect();
-	std::flush(std::cout);
-	if (!success){
-		std::cout<<"Connection failed\n";
-		return 1;
-	}
-
-	std::cout<<"Connection successful"<<std::endl;
-
-	jsonMessage = "{\"Data\": {\"Temp\": \"34\" } }"; //fastWriter.write(jsonPayload);
-	std::cout << "Publishing event:" << std::endl << jsonMessage << std::endl
-			<< std::flush;
-	// First publish event without listner.
-	quickClient.publishEvent("status", "json", jsonMessage.c_str(), 1);
-	std::cout<<"Published success\n";
-	quickClient.disconnect();
-	std::cout<<"Disconnected qucik start client"<<std::endl;
-      ...
+	//Create DeviceClient Instance
+	IOTP_DeviceClient qsClient(prop);
 
 
 
-The following program shows a device client publishing events in a registered flow
+The following program shows a device client instantiation using properties object in a registered flow
 
 .. code:: C++
 
@@ -76,34 +57,6 @@ The following program shows a device client publishing events in a registered fl
 
 	//Create DeviceClient Instance
 	IOTP_DeviceClient client(p);
-	
-	//Connect to Watson IoT Platform
-	std::cout<<"Connecting client to Watson IoT platform"<<std::endl;
-	success = client.connect();
-	std::cout<<"Connected client to Watson IoT platform"<<std::endl;
-	std::flush(std::cout);
-	if(!success)
-		return 1;
-
-	MyCommandCallback myCallback;
-	client.setCommandHandler(&myCallback);
-	client.subscribeCommands();
-	Json::Value jsonPayload;
-	Json::Value jsonText;
-
-	jsonMessage = "{\"Data\": {\"Temp\": \"34\" } }";//fastWriter.write(jsonPayload);
-	std::cout << "Publishing event:" << std::endl << jsonMessage << std::endl << std::flush;
-	// First publish event without listner.
-	client.publishEvent("status", "json", jsonMessage.c_str(), 1);
-
-	//Publish event with listner
-	std::cout << "Publishing event with listner:" << std::endl << jsonMessage << std::endl << std::flush;
-	client.publishEvent("status1", "json", jsonMessage.c_str(), 1, listener);
-	//Disconnect device client
-	client.disconnect();
-	std::cout << "Disconnected registered client\n";
-
-      ...
 
 
 
@@ -117,25 +70,6 @@ Instead of including a Properties object directly, you can use a configuration f
 	//Instantiate DeviceClient using configuration file
 	IOTP_DeviceClient client("../samples/device.cfg");
 	
-	client.setKeepAliveInterval(90);
-	std::cout<<"Connecting client to Watson IoT platform"<<std::endl;
-	success = client.connect();
-	std::cout<<"Connected client to Watson IoT platform"<<std::endl;
-	std::flush(std::cout);
-	if(!success)
-		return 1;
-
-	MyCommandCallback myCallback;
-	client.setCommandHandler(&myCallback);
-	Json::Value jsonPayload;
-	Json::Value jsonText;
-
-	jsonMessage = "{\"Data\": {\"Temp\": \"34\" } }";
-	std::cout << "Publishing event:" << std::endl << jsonMessage << std::endl << std::flush;
-	// First publish event without listner.
-	client.publishEvent("status", "json", jsonMessage.c_str(), 1);
-		
-      ...
 
 The content of the configuration file must be in the following format:
 
