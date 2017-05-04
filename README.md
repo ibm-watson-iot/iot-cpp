@@ -55,7 +55,7 @@ If the dependencies were not able to be installed with the script on the device,
 Build Instructions 
 ------------------
 
-1.  Install [CMake](https://cmake.org/install/)
+1.  Install [CMake](https://cmake.org/install/) and [CppTest](https://sourceforge.net/projects/cpptest/)
 2.  git clone https://github.com/ibm-watson-iot/iot-cpp.git
 3.  cd iot-cpp
 4.  sh setup.sh 
@@ -77,14 +77,8 @@ Running samples
 Detailed Documentation
 ----------------------
 
-- The [Device section] (docs/cpp_cli_for_devices.rst) contains information on how devices publish events and handle commands using the C++ ibmiotf Client Library. 
-- The [Managed Device section] (docs/cpp_cli_for_manageddevice.rst) contains information on how devices can connect to the Watson IoT Platform Device Management service using C++ ibmiotf Client Library and perform device management operations like firmware update, location update, and diagnostics update.
-- The [Gateway section] (docs/cpp_cli_for_gateway.rst) contains information on how gateways publish events and handle commands for itself and for the attached devices using the C++ ibmiotf Client Library. 
-- The [Gateway Management section] (docs/cpp_cli_for_managedgateway.rst) contains information on how to connect the gateway as Managed Gateway to IBM Watson IoT Platform and manage the attached devices.
-
-----
-
-
+- The [Devices section](https://github.com/ibm-watson-iot/iot-cpp/blob/master/docs/cpp_cli_for_devices.rst) contains information on how Device Client connect, publish events and handle commands using the C++ ibmiotf Client Library. 
+- The [Gateway section](https://github.com/ibm-watson-iot/iot-cpp/blob/master/docs/cpp_cli_for_gateway.rst) contains information on how Gateway Client connect, publish events and handle commands for itself and for the attached devices using the C++ ibmiotf Client Library. 
 
 License
 ---------------------------
