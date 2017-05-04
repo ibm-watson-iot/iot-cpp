@@ -5,12 +5,12 @@ C++ Client Library - Devices
 Introduction
 -------------------------------------------------------------------------------
 
-This client library describes how to use devices with the C++ ibmiotf client library. For help with getting started with this module, see `C++ Client Library - Introduction <https://github.com/ibm-watson-iot/iot-cpp/blob/master/README.md>`__. 
+This Devices Section describes how to use Device Client with the C++ ibmiotf client library. For help with getting started with this module, see `C++ Client Library - Introduction <https://github.com/ibm-watson-iot/iot-cpp/blob/master/README.md>`__. 
 
-Constructor
+Using Constructor to create DeviceClient instance with Properties Object
 -------------------------------------------------------------------------------
 
-The constructor builds the client instance, and accepts a Properties object containing the following definitions:
+The constructor builds the device client instance, and accepts a Properties object containing the following definitions:
 
 * org - Your organization ID. (This is a required field. In case of quickstart flow, provide org as quickstart.)
 * domain - (Optional) The messaging endpoint URL. By default the value is "internetofthings.ibmcloud.com"(Watson IoT Production server)
@@ -18,129 +18,75 @@ The constructor builds the client instance, and accepts a Properties object cont
 * id - The ID of your device. (This is a required field.
 * auth-method - Method of authentication (This is an optional field, needed only for registered flow and the only value currently supported is "token"). 
 * auth-token - API key token (This is an optional field, needed only for registered flow).
+* clientTrustStorePath - Path to Watson IoT Server Certificate.
+* port - Port Number to use for connection. Two supported secure ports are 8883 and 443.
 
 
-The Properties object creates definitions which are used to interact with the Watson IoT Platform module. 
+The Properties class has setter/getter methods to initialize the values which are used to interact with the Watson IoT Platform module. 
 
-The following code shows a device publishing events in a Quickstart mode.
+The following code shows a device client instantiation using properties object in a Quickstart mode.
 
 
 .. code:: C++
 
-
-
 	//Qick start mode
+	Properties prop;
 	prop.setorgId("quickstart");
 	prop.setdeviceType("devicetest");
 	prop.setdeviceId("haritestdevice");
 
-	std::cout<<"Creating IoTP Client with properties for quickstart mode"<<std::endl;
-	IOTP_DeviceClient quickClient(prop);
-	std::cout << "Connecting quick start client to Watson IoT platform" << std::endl;
-	success = quickClient.connect();
-	std::flush(std::cout);
-	if (!success){
-		std::cout<<"Connection failed\n";
-		return 1;
-	}
-
-	std::cout<<"Connection successful"<<std::endl;
-
-	jsonMessage = "{\"Data\": {\"Temp\": \"34\" } }"; //fastWriter.write(jsonPayload);
-	std::cout << "Publishing event:" << std::endl << jsonMessage << std::endl
-			<< std::flush;
-	// First publish event without listner.
-	quickClient.publishEvent("status", "json", jsonMessage.c_str(), 1);
-	std::cout<<"Published success\n";
-	quickClient.disconnect();
-	std::cout<<"Disconnected qucik start client"<<std::endl;
-      ...
-
- 
+	//Create DeviceClient Instance
+	IOTP_DeviceClient qsClient(prop);
 
 
-The following program shows a device publishing events in a registered flow
 
+The following program shows a device client instantiation using properties object in a registered flow
 
 .. code:: C++
 
+	//Initialize properties instance
+	Properties p;
+	p.setorgId("Org-ID");
+        p.setdomain("internetofthings.ibmcloud.com");
+        p.setdeviceType("type");
+        p.setdeviceId("id");
+        p.setauthMethod("token");
+        p.setauthToken("password");
+        p.setPort("8883");
+        p.settrustStore("iot-cpp-home/IoTFoudnation.pem")
 
-	//Registered device flow properties reading from configuration file in json format
-	std::cout<<"Connecting client to Watson IoT platform"<<std::endl;
-	success = client.connect();
-	std::cout<<"Connected client to Watson IoT platform"<<std::endl;
-	std::flush(std::cout);
-	if(!success)
-		return 1;
-
-	MyCommandCallback myCallback;
-	client.setCommandHandler(&myCallback);
-	client.subscribeCommands();
-	Json::Value jsonPayload;
-	Json::Value jsonText;
-
-	jsonMessage = "{\"Data\": {\"Temp\": \"34\" } }";//fastWriter.write(jsonPayload);
-	std::cout << "Publishing event:" << std::endl << jsonMessage << std::endl << std::flush;
-	// First publish event without listner.
-	client.publishEvent("status", "json", jsonMessage.c_str(), 1);
-
-	//Publish event with listner
-	std::cout << "Publishing event with listner:" << std::endl << jsonMessage << std::endl << std::flush;
-	client.publishEvent("status1", "json", jsonMessage.c_str(), 1, listener);
-	//Disconnect device client
-	client.disconnect();
-	std::cout << "Disconnected registered client\n";
-
-      ...
+	//Create DeviceClient Instance
+	IOTP_DeviceClient client(p);
 
 
 
-Using a configuration file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using Constructor to create DeviceClient instance with Configuration File
+--------------------------------------------------------------------------
 
 Instead of including a Properties object directly, you can use a configuration file containing the name-value pairs for Properties. If you are using a configuration file containing a Properties object, use the following code format.
 
 .. code:: C++
 
-
-	//Registered device flow properties reading from configuration file in json format
-	std::cout<<"Creating IoTP Client with properties"<<std::endl;
-	IOTP_DeviceClient client(prop);
-	client.setKeepAliveInterval(90);
-	std::cout<<"Connecting client to Watson IoT platform"<<std::endl;
-	success = client.connect();
-	std::cout<<"Connected client to Watson IoT platform"<<std::endl;
-	std::flush(std::cout);
-	if(!success)
-		return 1;
-
-	MyCommandCallback myCallback;
-	client.setCommandHandler(&myCallback);
-	Json::Value jsonPayload;
-	Json::Value jsonText;
-
-	jsonMessage = "{\"Data\": {\"Temp\": \"34\" } }";
-	std::cout << "Publishing event:" << std::endl << jsonMessage << std::endl << std::flush;
-	// First publish event without listner.
-	client.publishEvent("status", "json", jsonMessage.c_str(), 1);
-		
-      ...
+	//Instantiate DeviceClient using configuration file
+	IOTP_DeviceClient client("../samples/device.cfg");
+	
 
 The content of the configuration file must be in the following format:
 
 ::
 
   {
-	"org": $orgId,
-	"domain": $domain,
-	"type": $deviceType,
-	"id": $deviceId,
-	"auth-method": $authMethod,
-	"auth-token": $authToken,
-}
+	"Organization-ID": $orgId,
+	"Domain": $domain,
+	"Device-Type": $deviceType,
+	"Device-ID": $deviceId,
+	"Authentication-Method": $authMethod,
+	"Authentication-Token": $authToken,
+	"Port" : 8883 or 443,
+	"clientTrustStorePath" : "iot-cpp-home/IoTFoundation.pem"
+   }
 
 
-----
 
 Connecting to the Watson IoT Platform
 ----------------------------------------------------
@@ -158,8 +104,6 @@ Also, one can use the setKeepAliveInterval(int) method before calling connect() 
     
 After the successful connection to the IoTF service, the device client can perform the following operations, like publishing events and subscribe to device commands from application.
 
-----
-
 
 Publishing events
 -------------------------------------------------------------------------------
@@ -167,7 +111,7 @@ Events are the mechanism by which devices publish data to the Watson IoT Platfor
 
 When an event is received by the IBM IoT Foundation the credentials of the connection on which the event was received are used to determine from which device the event was sent. With this architecture it is impossible for a device to impersonate another device.
 
-Events can be published at any of the three `quality of service levels <https://docs.internetofthings.ibmcloud.com/messaging/mqtt.html#/>` defined by the MQTT protocol.  By default events will be published as qos level 0.
+Events can be published at any of the three `quality of service levels <https://docs.internetofthings.ibmcloud.com/messaging/mqtt.html#/>`_ defined by the MQTT protocol.  By default events will be published as qos level 0.
 
 Publish event using user-defined quality of service
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -180,7 +124,6 @@ Events can be published at higher MQTT quality of servive levels, but these even
 	jsonMessage = "{\"Data\": {\"Temp\": \"34\" } }"; 
 	client.publishEvent("status", "json", jsonMessage.c_str(), 1);
 
-----
 
 Handling commands
 -------------------------------------------------------------------------------
@@ -222,5 +165,7 @@ The messages are returned as an instance of the Command class which has the foll
 	MyCommandCallback myCallback;
 	client.setCommandHandler(&myCallback);
 	
+
+For complete code sample, refer to our `DeviceSample <https://github.com/ibm-watson-iot/iot-cpp/blob/master/samples/sampleDevice.cpp>`_ Program.
 
 ----
