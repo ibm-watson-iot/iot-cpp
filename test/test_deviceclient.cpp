@@ -38,7 +38,7 @@ class deviceClientTest : public Test::Suite {
                 TEST_ADD (deviceClientTest::testInitializeDeviceClientFromFile);
                 TEST_ADD (deviceClientTest::testConnectAndPublishInQSMode);
                 TEST_ADD (deviceClientTest::testConnectAndPublishInRegMode);
-                TEST_ADD (deviceClientTest::testConnectAndPublishWith443);
+                //TEST_ADD (deviceClientTest::testConnectAndPublishWith443);
         }
 };
 
