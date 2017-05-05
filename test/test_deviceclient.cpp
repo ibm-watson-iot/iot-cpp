@@ -192,9 +192,6 @@ void deviceClientTest:: testConnectAndPublishWith443(){
         client.publishEvent("unitTestTemp","json",jsonMessage.c_str(),0,listener);
         this_thread::sleep_for (chrono::seconds(1));
 
-        //Disconnect gateway client if connected
-        if(client.isConnected())
-                client.disconnect();
 }
 
 int main ( )
