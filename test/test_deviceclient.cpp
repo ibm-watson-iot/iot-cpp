@@ -38,7 +38,7 @@ class deviceClientTest : public Test::Suite {
                 TEST_ADD (deviceClientTest::testInitializeDeviceClientFromFile);
                 TEST_ADD (deviceClientTest::testConnectAndPublishInQSMode);
                 TEST_ADD (deviceClientTest::testConnectAndPublishInRegMode);
-                TEST_ADD (deviceClientTest::testConnectAndPublishWith443);
+                //TEST_ADD (deviceClientTest::testConnectAndPublishWith443);
         }
 };
 
@@ -192,6 +192,9 @@ void deviceClientTest:: testConnectAndPublishWith443(){
         client.publishEvent("unitTestTemp","json",jsonMessage.c_str(),0,listener);
         this_thread::sleep_for (chrono::seconds(1));
 
+        //Disconnect gateway client if connected
+        if(client.isConnected())
+                client.disconnect();
 }
 
 int main ( )
