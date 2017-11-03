@@ -19,9 +19,9 @@ tar -xvf 0.10.6.tar.gz
 echo "Downloading log4cpp...."
 git clone https://git.code.sf.net/p/log4cpp/codegit log4cpp-codegit
 echo "Copying the necessary files to lib"
-cp paho.mqtt.cpp-0.5-prerelease/src/*.cpp ../lib/
-cp -r paho.mqtt.cpp-0.5-prerelease/src/mqtt ../lib/
-cp paho.mqtt.cpp-1.0.0/src/*.c ../lib/
+cp paho.mqtt.cpp-1.0.0/src/*.cpp ../lib/
+cp -r paho.mqtt.cpp-1.0.0/src/mqtt ../lib/
+cp paho.mqtt.c-1.2.0/src/*.c ../lib/
 cp paho.mqtt.c-1.2.0/src/*.h ../lib/
 cd jsoncpp-0.10.6
 python amalgamate.py
