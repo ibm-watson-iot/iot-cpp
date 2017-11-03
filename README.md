@@ -68,11 +68,11 @@ All the output files will be created under the build directory.
 Running samples
 ---------------
 1. cd ..
-1. cp src/log4cpp.properties build/
-2. Update device.cfg and gateway.cfg properties files present in iot-cpp/samples
-3. cd iot-cpp/build
-4. Execute Device Sample: ./samples/sampleDevice
-5. Execute Gateway Sample: ./samples/sampleGateway
+2. cp src/log4cpp.properties build/
+3. Update device.cfg and gateway.cfg properties files present in iot-cpp/samples
+4. cd iot-cpp/build
+5. Execute Device Sample: ./samples/sampleDevice
+6. Execute Gateway Sample: ./samples/sampleGateway
 
 Detailed Documentation
 ----------------------
