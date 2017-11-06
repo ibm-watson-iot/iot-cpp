@@ -58,7 +58,7 @@ namespace Watson_IOTP {
 					~IOTF_Callback();
 					void connection_lost(const std::string& cause);
 					void message_arrived(const std::string& topic, mqtt::const_message_ptr msg);
-					void delivery_complete(mqtt::idelivery_token_ptr tok);
+					void delivery_complete(mqtt::delivery_token_ptr tok);
 					void set_callback(CommandCallback* cb);
 
 					/**
@@ -103,12 +103,12 @@ namespace Watson_IOTP {
 					 * This method is invoked when an action fails.
 					 * @param asyncActionToken
 					 */
-					virtual void on_failure(const mqtt::itoken& asyncActionToken);
+					virtual void on_failure(const mqtt::token& asyncActionToken);
 					/**
 					 * This method is invoked when an action has completed successfully.
 					 * @param asyncActionToken
 					 */
-					virtual void on_success(const mqtt::itoken& asyncActionToken);
+					virtual void on_success(const mqtt::token& asyncActionToken);
 					bool success();
 				private:
 					bool mSuccess;
@@ -209,8 +209,8 @@ namespace Watson_IOTP {
 			 * @param message - message to be posted
 			 * @return mqtt::idelivery_token_ptr
 			 */
-			mqtt::idelivery_token_ptr publishTopic(std::string topic, mqtt::message_ptr message);
-			mqtt::idelivery_token_ptr publishTopic(std::string topic, mqtt::message_ptr message,
+			mqtt::delivery_token_ptr publishTopic(std::string topic, mqtt::message_ptr message);
+			mqtt::delivery_token_ptr publishTopic(std::string topic, mqtt::message_ptr message,
 										void* userContext, mqtt::iaction_listener& cb);
 
 			bool subscribeTopic(const std::string& topic, int qos);

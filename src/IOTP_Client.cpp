@@ -132,7 +132,7 @@ namespace Watson_IOTP {
 		}
 	}
 
-	void IOTP_Client::IOTF_Callback::delivery_complete(mqtt::idelivery_token_ptr tok) {
+	void IOTP_Client::IOTF_Callback::delivery_complete(mqtt::delivery_token_ptr tok) {
 		//std::cout << "Delivery complete for token: " << (tok ? tok->get_message_id() : -1) << std::endl;
 	}
 
@@ -200,14 +200,14 @@ namespace Watson_IOTP {
 	 * This method is invoked when an action fails.
 	 * @param asyncActionToken
 	 */
-	void IOTP_Client::IOTF_ActionCallback::on_failure(const mqtt::itoken& asyncActionToken) {
+	void IOTP_Client::IOTF_ActionCallback::on_failure(const mqtt::token& asyncActionToken) {
 		mSuccess = false;
 	}
 	/**
 	 * This method is invoked when an action has completed successfully.
 	 * @param asyncActionToken
 	 */
-	void IOTP_Client::IOTF_ActionCallback::on_success(const mqtt::itoken& asyncActionToken) {
+	void IOTP_Client::IOTF_ActionCallback::on_success(const mqtt::token& asyncActionToken) {
 		mSuccess= true;
 	}
 
@@ -525,7 +525,7 @@ namespace Watson_IOTP {
 		}
 
 
-		mqtt::itoken_ptr conntok;
+		mqtt::token_ptr conntok;
 		logger.debug("Calling pasync_client->connect()...");
 		conntok = pasync_client->connect(connectOptions, NULL, action);
 		conntok->wait_for_completion(DEFAULT_TIMEOUT());
@@ -629,12 +629,12 @@ namespace Watson_IOTP {
 		return delivery_tok;
 	}
 
-	mqtt::idelivery_token_ptr IOTP_Client::publishTopic(std::string topic, mqtt::message_ptr message,
+	mqtt::delivery_token_ptr IOTP_Client::publishTopic(std::string topic, mqtt::message_ptr message,
 					void* userContext, mqtt::iaction_listener& cb) {
 		std::string methodName = __PRETTY_FUNCTION__;
 		logger.debug(methodName+" Entry: ");
 		logger.debug("Calling pasync_client->publish(cb)...");
-		mqtt::idelivery_token_ptr delivery_tok = pasync_client->publish(topic, message, userContext, cb);
+		mqtt::delivery_token_ptr delivery_tok = pasync_client->publish(topic, message, userContext, cb);
 		logger.debug(methodName+" Exit: ");
 		return delivery_tok;
 	}
@@ -645,7 +645,7 @@ namespace Watson_IOTP {
 		bool rc = false;
 		if ((rc = callback_ptr->check_subscription(topic)) == false) {
 			logger.debug("Calling pasync_client->subscribe()....");
-			mqtt::itoken_ptr tok = pasync_client->subscribe(topic, qos);
+			mqtt::token_ptr tok = pasync_client->subscribe(topic, qos);
 			tok->wait_for_completion(DEFAULT_TIMEOUT());
 			if (tok->is_complete()) {
 				logger.debug("Adding the subscription for the topic: "+topic);
@@ -675,7 +675,7 @@ namespace Watson_IOTP {
 		bool rc = false;
 		if (callback_ptr->check_subscription(topic, handler) == false) {
 			logger.debug("Calling pasync_client->subscribe() for the topic - " + topic);
-			mqtt::itoken_ptr tok = pasync_client->subscribe(topic, qos);
+			mqtt::token_ptr tok = pasync_client->subscribe(topic, qos);
 			tok->wait_for_completion(DEFAULT_TIMEOUT());
 			if (tok->is_complete()) {
 				logger.debug("Calling callback_ptr->add_subscription() for the topic - " + topic);
@@ -704,7 +704,7 @@ namespace Watson_IOTP {
 		if (callback_ptr->check_subscription(topic) == true) {
 			logger.debug("There exists subscription for topic - " + topic);
 			logger.debug("Calling pasync_client->unsubscribe() for this topic...");
-			mqtt::itoken_ptr tok = pasync_client->unsubscribe(topic);
+			mqtt::token_ptr tok = pasync_client->unsubscribe(topic);
 			tok->wait_for_completion(DEFAULT_TIMEOUT());
 			if (tok->is_complete()) {
 				logger.debug("Calling callback_ptr->remove_subscription() for this topic...");
@@ -725,7 +725,7 @@ namespace Watson_IOTP {
 		std::string methodName = __PRETTY_FUNCTION__;
 		logger.debug(methodName+" Entry: ");
 		logger.debug("Calling pasync_client->disconnect()...");
-		mqtt::itoken_ptr conntok = pasync_client->disconnect();
+		mqtt::token_ptr conntok = pasync_client->disconnect();
 		conntok->wait_for_completion();
 		logger.debug(methodName+" Exit: ");
 	}
@@ -760,7 +760,7 @@ namespace Watson_IOTP {
 					std::string topic(reply->getTopic());
 					std::string jsonMessage(jsonValueToString(reply->getPayload()));
 					std::cout << "Sending TOPIC " << topic << " PAYLOAD " << jsonMessage << std::endl;
-					mqtt::idelivery_token_ptr pubtok = pasync_client->publish(topic, (void*)jsonMessage.data(), jsonMessage.size(), reply->getQos(), false);
+					mqtt::delivery_token_ptr pubtok = pasync_client->publish(topic, (void*)jsonMessage.data(), jsonMessage.size(), reply->getQos(), false);
 					pubtok->wait_for_completion(DEFAULT_TIMEOUT());
 					bool success = pubtok->is_complete();
 				} else {
@@ -816,7 +816,7 @@ namespace Watson_IOTP {
 
 		mqtt::message_ptr pubmsg = std::make_shared<mqtt::message>(jsonMessage);
 		pubmsg->set_qos(qos);
-		mqtt::idelivery_token_ptr pubtok = this->publishTopic(topic, pubmsg);
+		mqtt::delivery_token_ptr pubtok = this->publishTopic(topic, pubmsg);
 		pubtok->wait_for_completion(DEFAULT_TIMEOUT());
 		success = pubtok->is_complete();
 
