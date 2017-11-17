@@ -24,7 +24,7 @@ Dependencies
 1.  [Paho MQTT C++ Client]
 
   [Paho MQTT C++ Client]: https://eclipse.org/paho/clients/cpp/
-  
+
 2.  [Paho MQTT C Client]
 
   [Paho MQTT C Client]: https://eclipse.org/paho/clients/c/
@@ -32,19 +32,19 @@ Dependencies
 3.  [A C++ library for interacting with JSON - jsoncpp]
 
   [A C++ library for interacting with JSON - jsoncpp]: https://github.com/open-source-parsers/jsoncpp
-  
+
 4.  [Log library for C++ - log4cpp]
 
   [Log library for C++ - log4cpp]: https://sourceforge.net/projects/log4cpp/
- 
+
 5.  [A C++ Unit Testing Framework - CppTest]
 
     [A C++ Unit Testing Framework - CppTest]: http://cpptest.sourceforge.net/
-    
+
 6.  [CMake Build Tool]
 
   [CMake Build Tool]: https://cmake.org/
- 
+
 Installing the Dependencies
 ---------------------------
 Run the [setup.sh](https://github.com/ibm-watson-iot/iot-cpp/blob/master/setup.sh) file in the iot-cpp directory. This script installs the required dependencies and copies the dependencies into the lib directory after making necessary changes.
@@ -52,14 +52,14 @@ Run the [setup.sh](https://github.com/ibm-watson-iot/iot-cpp/blob/master/setup.s
 Note:
 If the dependencies were not able to be installed with the script on the device, manually pull the dependencies from the links mentioned in [setup.sh](https://github.com/ibm-watson-iot/iot-cpp/blob/master/setup.sh) and follow the steps for making the necessary changes.
 
-Build Instructions 
+Build Instructions
 ------------------
 
 1.  Install [CMake](https://cmake.org/install/) and [CppTest](https://sourceforge.net/projects/cpptest/)
 2.  git clone https://github.com/ibm-watson-iot/iot-cpp.git
 3.  cd iot-cpp
-4.  sh setup.sh 
-5.  mkdir build ; cd build 
+4.  sh setup.sh
+5.  cd build 
 6.  cmake ..
 7.  make
 
@@ -77,8 +77,8 @@ Running samples
 Detailed Documentation
 ----------------------
 
-- The [Devices section](https://github.com/ibm-watson-iot/iot-cpp/blob/master/docs/cpp_cli_for_devices.rst) contains information on how Device Client connect, publish events and handle commands using the C++ ibmiotf Client Library. 
-- The [Gateway section](https://github.com/ibm-watson-iot/iot-cpp/blob/master/docs/cpp_cli_for_gateway.rst) contains information on how Gateway Client connect, publish events and handle commands for itself and for the attached devices using the C++ ibmiotf Client Library. 
+- The [Devices section](https://github.com/ibm-watson-iot/iot-cpp/blob/master/docs/cpp_cli_for_devices.rst) contains information on how Device Client connect, publish events and handle commands using the C++ ibmiotf Client Library.
+- The [Gateway section](https://github.com/ibm-watson-iot/iot-cpp/blob/master/docs/cpp_cli_for_gateway.rst) contains information on how Gateway Client connect, publish events and handle commands for itself and for the attached devices using the C++ ibmiotf Client Library.
 
 License
 ---------------------------

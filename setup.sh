@@ -17,7 +17,10 @@ echo "Downloading jsoncpp...."
 curl -LO https://github.com/open-source-parsers/jsoncpp/archive/0.10.6.tar.gz
 tar -xvf 0.10.6.tar.gz
 echo "Downloading log4cpp...."
-git clone https://git.code.sf.net/p/log4cpp/codegit log4cpp-codegit
+# git clone https://git.code.sf.net/p/log4cpp/codegit log4cpp-codegit
+curl -Lo log4cpp-codegit.tar.gz https://sourceforge.net/projects/log4cpp/files/latest/download
+tar -xvzf log4cpp-codegit.tar.gz
+mv log4cpp log4cpp-codegit
 echo "Copying the necessary files to lib"
 cp paho.mqtt.cpp-0.5-prerelease/src/*.cpp ../lib/
 cp -r paho.mqtt.cpp-0.5-prerelease/src/mqtt ../lib/
