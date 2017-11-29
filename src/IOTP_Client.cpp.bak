@@ -525,28 +525,17 @@ namespace Watson_IOTP {
 		}
 
 
-		logger.debug("Setting the callback...");
-		printf("\n%ld-Setting the callback\n", pthread_self());
-		callback_ptr = set_callback();
-		printf("\n%ld-OUT of Setting the callback\n", pthread_self());
-
 		mqtt::itoken_ptr conntok;
 		logger.debug("Calling pasync_client->connect()...");
-		printf("\n%ld-calling async connect\n", pthread_self());
 		conntok = pasync_client->connect(connectOptions, NULL, action);
 		conntok->wait_for_completion(DEFAULT_TIMEOUT());
-		printf("\n%ld-Call COMPLETE async connect\n", pthread_self());
-		
+
 		if (action.success()) {
-// 			logger.debug("Setting the callback...");
-// 			printf("\n%ld-Setting the callback\n", pthread_self());
-// 			callback_ptr = set_callback();
-// 			printf("\n%ld-OUT of Setting the callback\n", pthread_self());
-			
+			logger.debug("Setting the callback...");
+			callback_ptr = set_callback();
+			logger.debug("Callback pointer set\n\n\n");
 		}
-		
-		logger.debug("callback set...");
-		
+		logger.debug("Is complete......\n\n\n");
 		if (conntok->is_complete() == false){
 			logger.debug("conntok->is_complete() is false...");
 			rc = false;
@@ -611,11 +600,12 @@ namespace Watson_IOTP {
 
 
 	IOTP_Client::iotf_callback_ptr IOTP_Client::set_callback() {
+		logger.debug("Inside set_callback().......\n\n\n");
 		IOTF_Callback* cb = new IOTF_Callback(this);
+		logger.debug("Callback pointer initialized............\n\n\n");
 		pasync_client->set_callback(*cb);
-		iotf_callback_ptr myptr = iotf_callback_ptr(cb);
-		return myptr;
-		//return iotf_callback_ptr(cb);
+		logger.debug("About to return pointer...............\n\n\n");
+		return iotf_callback_ptr(cb);
 	}
 
 	/**
