@@ -524,16 +524,18 @@ namespace Watson_IOTP {
 			connectOptions.set_ssl(sslopts);
 		}
 
+                logger.debug("Setting the callback...");
+                callback_ptr = set_callback();
 
 		mqtt::itoken_ptr conntok;
 		logger.debug("Calling pasync_client->connect()...");
 		conntok = pasync_client->connect(connectOptions, NULL, action);
 		conntok->wait_for_completion(DEFAULT_TIMEOUT());
 
-		if (action.success()) {
-			logger.debug("Setting the callback...");
-			callback_ptr = set_callback();
-		}
+		//if (action.success()) {
+		//	logger.debug("Setting the callback...");
+		//	callback_ptr = set_callback();
+		//}
 
 		if (conntok->is_complete() == false){
 			logger.debug("conntok->is_complete() is false...");
