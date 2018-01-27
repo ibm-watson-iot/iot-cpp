@@ -388,7 +388,8 @@ namespace Watson_IOTP {
 	IOTP_Client::IOTP_Client(const std::string& filePath, std::string logPropertiesFile):
 		mServerURI(""),mClientID("")
 	{
-		log4cpp::PropertyConfigurator::configure(logPropertiesFile);
+		if(logPropertiesFile.emprty() == false)
+			log4cpp::PropertyConfigurator::configure(logPropertiesFile);
 		std::string methodName = __PRETTY_FUNCTION__;
 		logger.debug(methodName+" Entry: ");
 		if(InitializePropertiesFromFile(filePath,mProperties))
