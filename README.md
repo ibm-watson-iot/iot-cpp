@@ -1,6 +1,15 @@
-
 C++ Client Library - Introduction
 ============================================
+
+This repository is no longer maintained.  Please refer to the following client library options for supported options:
+
+- https://github.com/ibm-watson-iot/iot-python
+- https://github.com/ibm-watson-iot/iot-c
+- https://github.com/ibm-watson-iot/iot-java
+- https://github.com/ibm-watson-iot/iot-nodejs
+- https://github.com/ibm-watson-iot/iot-csharp
+
+----
 
 This C++ Client Library can be used to simplify interactions with the [IBM Watson IoT Platform](https://internetofthings.ibmcloud.com). Supported platforms are OSX and Linux.
 
